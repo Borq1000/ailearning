@@ -38,6 +38,17 @@ beforeEach(() => {
 })
 
 describe('CodeExercise', () => {
+  it('shows the code as plain text until the lazily loaded editor arrives', async () => {
+    // свежая копия модуля: редактор в ней ещё ни разу не загружался
+    vi.resetModules()
+    const { CodeExercise: FreshExercise } = await import('./CodeExercise')
+    const { container } = render(<FreshExercise id="dot" />)
+    const placeholder = container.querySelector('.code-editor-placeholder')
+    expect(placeholder).toHaveTextContent('function dot(a: number[], b: number[]): number {')
+    expect(await screen.findByRole('textbox', { name: 'Код: Напиши dot(a, b)' })).toBeInTheDocument()
+    expect(container.querySelector('.code-editor-placeholder')).toBeNull()
+  })
+
   it('passes the gate when every test is green', async () => {
     run.mockResolvedValue(green)
     render(<CodeExercise id="dot" />)
@@ -68,7 +79,8 @@ describe('CodeExercise', () => {
 
   it('saves edits to progress', async () => {
     render(<CodeExercise id="dot" />)
-    const editor = screen.getByRole('textbox', { name: 'Код: Напиши dot(a, b)' })
+    // редактор подгружается лениво (next/dynamic), поэтому ждём его появления
+    const editor = await screen.findByRole('textbox', { name: 'Код: Напиши dot(a, b)' })
     await userEvent.clear(editor)
     await userEvent.type(editor, 'x')
     expect(useProgress.getState().code.dot).toBe('x')
@@ -86,7 +98,7 @@ describe('CodeExercise', () => {
     let finish: (value: unknown) => void = () => {}
     run.mockReturnValue(new Promise((resolve) => (finish = resolve)))
     render(<CodeExercise id="dot" />)
-    const shortcut = screen.getByRole('button', { name: 'run-shortcut' })
+    const shortcut = await screen.findByRole('button', { name: 'run-shortcut' })
     fireEvent.click(shortcut)
     fireEvent.click(shortcut)
     expect(run).toHaveBeenCalledTimes(1)

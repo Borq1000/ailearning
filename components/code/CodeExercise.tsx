@@ -1,13 +1,34 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { createContext, useContext, useRef, useState } from 'react'
 import { useGate } from '@/components/lesson/engine/useGate'
 import { EXERCISES } from '@/content/attention/exercises'
 import type { ExecutionResult, ExerciseDef } from '@/lib/code/types'
 import { plural } from '@/lib/plural'
 import { useProgress } from '@/lib/progress/store'
-import { CodeEditor } from './CodeEditor'
 import { useRunner } from './useRunner'
+
+/** Код упражнения для заглушки, пока загружается редактор. */
+const SourceContext = createContext('')
+
+/** Тот же код строка в строку и с той же высотой строки, что у CodeMirror, — страница не прыгает. */
+function EditorPlaceholder() {
+  const source = useContext(SourceContext)
+  return (
+    <div className="code-editor code-editor-placeholder" aria-busy="true">
+      {source.split('\n').map((line, i) => (
+        <div key={i}>{line || ' '}</div>
+      ))}
+    </div>
+  )
+}
+
+// CodeMirror тяжёлый: грузим его отдельным чанком и только там, где есть упражнение с кодом.
+const CodeEditor = dynamic(() => import('./CodeEditor').then((m) => m.CodeEditor), {
+  ssr: false,
+  loading: EditorPlaceholder,
+})
 
 function RunReport({ result }: { result: ExecutionResult }) {
   if (result.status === 'timeout') {
@@ -97,19 +118,21 @@ function CodeExerciseView({ exercise }: { exercise: ExerciseDef }) {
       )}
 
       <div className="observatory mt-4 p-3">
-        <CodeEditor
-          value={source}
-          onChange={(code) => saveCode(exercise.id, code)}
-          onRun={runTests}
-          ariaLabel={`Код: ${exercise.title}`}
-        />
+        <SourceContext.Provider value={source}>
+          <CodeEditor
+            value={source}
+            onChange={(code) => saveCode(exercise.id, code)}
+            onRun={runTests}
+            ariaLabel={`Код: ${exercise.title}`}
+          />
+        </SourceContext.Provider>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button type="button" className="btn-primary" onClick={runTests} disabled={running}>
           {running ? 'Проверяю…' : '▶ Запустить тесты'}
         </button>
-        <span className="text-xs text-muted">Ctrl + Enter</span>
+        <span className="text-xs text-muted">Ctrl/⌘ + Enter</span>
         {hints < exercise.hints.length && (
           <button type="button" className="btn-ghost" onClick={() => setHints(hints + 1)}>
             Подсказка ({hints + 1}/{exercise.hints.length})

@@ -251,6 +251,16 @@
   .code-editor .cm-editor {
     max-height: 420px;
   }
+  /* Заглушка, пока грузится CodeMirror: те же строки, шрифт, межстрочный интервал и отступы, что у редактора (тема oneDark). */
+  .code-editor-placeholder {
+    max-height: 420px;
+    padding: 4px 0 4px 35px; /* ширина колонки номеров строк + отступ строки */
+    background: #282c34;
+    color: #abb2bf;
+    font-family: monospace;
+    line-height: 1.4;
+    white-space: pre;
+  }
 }
 
 @media (min-width: 1280px) {
