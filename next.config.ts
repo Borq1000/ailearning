@@ -1,5 +1,6 @@
 import createMDX from '@next/mdx'
 import type { NextConfig } from 'next'
+import path from 'node:path'
 
 const nextConfig: NextConfig = {
   output: 'export',
@@ -8,7 +9,9 @@ const nextConfig: NextConfig = {
 
 const withMDX = createMDX({
   options: {
-    remarkPlugins: ['remark-gfm', 'remark-math'],
+    // Turbopack принимает плагины только строками. Лоадер резолвит их от папки MDX-файла, а не от корня проекта,
+    // поэтому локальный плагин задан абсолютным путём
+    remarkPlugins: ['remark-gfm', 'remark-math', path.join(process.cwd(), 'lib/mdx/remark-steps.mjs')],
     rehypePlugins: ['rehype-katex'],
   },
 })
