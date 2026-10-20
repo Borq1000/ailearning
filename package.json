@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "postbuild": "node scripts/flatten-segments.mjs",
-    "start": "next start",
+    "start": "serve out -l 3000",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -7,8 +7,11 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npm run serve:out',
     url: 'http://localhost:3100',
-    reuseExistingServer: true,
+    // Локально уже запущенный сервер на 3100 переиспользуется (и тогда тестируется его сборка); в CI — всегда свежая.
+    reuseExistingServer: !process.env.CI,
     timeout: 300_000,
+    // адрес сайта для sitemap/robots/Open Graph — тот, на котором сборку открывают тесты
+    env: { NEXT_PUBLIC_SITE_URL: 'http://localhost:3100' },
   },
   projects: [
     {
