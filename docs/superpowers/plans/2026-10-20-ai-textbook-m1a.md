@@ -4767,7 +4767,7 @@ describe('Stage', () => {
     expect(await screen.findByText('Без 3D')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Поле' })).toBeInTheDocument()
     expect(screen.getByText('Подпись')).toBeInTheDocument()
-    expect(screen.queryByText(/потяни, чтобы вращать/)).toBeNull()
+    expect(screen.queryByText(/чтобы вращать/)).toBeNull()
   })
 })
 
