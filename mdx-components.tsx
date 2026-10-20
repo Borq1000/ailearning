@@ -13,6 +13,7 @@ import { WorkedExample } from '@/components/lesson/blocks/WorkedExample'
 import { Check } from '@/components/lesson/gates/Check'
 import { ExplainBack } from '@/components/lesson/gates/ExplainBack'
 import { LessonStep } from '@/components/lesson/engine/LessonStep'
+import { NextWordGame } from '@/components/lesson/gates/NextWordGame'
 import { Predict } from '@/components/lesson/gates/Predict'
 import { Recall } from '@/components/lesson/gates/Recall'
 import { DotProduct3D } from '@/components/viz/vectors/DotProduct3D'
@@ -26,6 +27,7 @@ const components: MDXComponents = {
   CourseMap,
   LessonStep,
   Check,
+  NextWordGame,
   Predict,
   ExplainBack,
   Recall,
