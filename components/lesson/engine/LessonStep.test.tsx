@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
 import { LessonProvider } from '@/components/lesson/engine/LessonContext'
@@ -73,6 +73,43 @@ describe('LessonStep', () => {
     expect(useProgress.getState().lessons['9.1'].status).toBe('completed')
     expect(useProgress.getState().cards.c1?.box).toBe(1)
   })
+
+  it('still offers «Завершить урок» when the saved step is past the last one (e.g. a step was removed)', async () => {
+    useProgress.getState().unlockStep('9.1', 5)
+    useProgress.getState().recordAttempt('g1', true)
+    render(<Lesson />)
+    for (const i of [0, 1, 2]) expect(step(i)).toHaveAttribute('data-state', 'open')
+    await userEvent.click(screen.getByRole('button', { name: 'Завершить урок ✓' }))
+    expect(useProgress.getState().lessons['9.1'].status).toBe('completed')
+  })
+
+  it('moves focus to the newly opened step after «Дальше»', async () => {
+    render(<Lesson />)
+    await userEvent.click(screen.getByRole('button', { name: 'Дальше →' }))
+    await waitFor(() => expect(step(1)).toHaveFocus())
+  })
+
+  for (const [reduced, behavior] of [
+    [false, 'smooth'],
+    [true, 'auto'],
+  ] as const) {
+    it(`scrolls to the next step with behavior «${behavior}» when reduced motion is ${reduced ? 'on' : 'off'}`, async () => {
+      const original = Element.prototype.scrollIntoView
+      const scrollIntoView = vi.fn()
+      Element.prototype.scrollIntoView = scrollIntoView
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: reduced && query === '(prefers-reduced-motion: reduce)',
+      }))
+      try {
+        render(<Lesson />)
+        await userEvent.click(screen.getByRole('button', { name: 'Дальше →' }))
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior, block: 'start' }))
+      } finally {
+        vi.unstubAllGlobals()
+        Element.prototype.scrollIntoView = original
+      }
+    })
+  }
 
   it('opens every step of a completed lesson and shows no step buttons', () => {
     useProgress.getState().completeLesson('9.1', [], '2026-10-20')

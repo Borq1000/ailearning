@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { GLOSSARY } from '@/content/glossary'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
+import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { Faded } from '@/components/lesson/gates/Faded'
 import { Level, Levels } from './Levels'
 import { Term } from './Term'
@@ -29,6 +30,15 @@ describe('Faded', () => {
     await userEvent.type(second, '−4,0')
     await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
     expect(useProgress.getState().gates.f1.passed).toBe(true)
+  })
+
+  it('uses text keyboards so a minus can be typed on iPhone', () => {
+    render(<Faded id="f0" steps={steps} />)
+    for (const field of screen.getAllByRole('textbox')) {
+      expect(field).toHaveAttribute('inputmode', 'text')
+      expect(field).toHaveAttribute('autocomplete', 'off')
+      expect(field).toHaveAttribute('spellcheck', 'false')
+    }
   })
 
   it('fills the blanks with the correct answers after "Показать ответы"', async () => {
@@ -81,10 +91,33 @@ describe('Levels', () => {
       </Levels>,
     )
     expect(screen.getByRole('tab', { name: 'История' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByText('сказка')).toBeInTheDocument()
+    expect(screen.getByText('сказка')).toBeVisible()
     await userEvent.click(screen.getByRole('tab', { name: 'Алгебра' }))
+    expect(screen.getByText('формула')).toBeVisible()
+    expect(screen.getByText('сказка')).not.toBeVisible()
+  })
+
+  it('keeps every level in the HTML and links tabs with their panels', () => {
+    render(
+      <Levels>
+        <Level title="История">
+          <p>сказка</p>
+        </Level>
+        <Level title="Алгебра">
+          <p>формула</p>
+        </Level>
+      </Levels>,
+    )
+    // неактивный уровень скрыт, но есть в разметке (его видят поисковики и читалки без JS)
     expect(screen.getByText('формула')).toBeInTheDocument()
-    expect(screen.queryByText('сказка')).toBeNull()
+    expect(screen.getByText('формула')).not.toBeVisible()
+    for (const name of ['История', 'Алгебра']) {
+      const tab = screen.getByRole('tab', { name })
+      const panel = document.getElementById(tab.getAttribute('aria-controls')!)
+      expect(panel).toHaveAttribute('role', 'tabpanel')
+      expect(panel).toHaveAttribute('aria-labelledby', tab.id)
+    }
+    expect(screen.getByRole('tabpanel', { name: 'История' })).toHaveTextContent('сказка')
   })
 })
 
@@ -105,6 +138,25 @@ describe('Term', () => {
     render(<Term id="dot-product">скалярное произведение</Term>)
     await userEvent.click(screen.getByRole('button', { name: 'скалярное произведение' }))
     expect(screen.getByRole('dialog')).toHaveTextContent('Подробно — в уроке 1.3')
+  })
+
+  it('links back to the lesson once the term has been studied', async () => {
+    useProgress.getState().completeLesson('1.3', [], '2026-10-20')
+    render(<Term id="dot-product">скалярное произведение</Term>)
+    await userEvent.click(screen.getByRole('button', { name: 'скалярное произведение' }))
+    const link = screen.getByRole('link', { name: /^Урок 1\.3: / })
+    expect(link).toHaveAttribute('href', '/courses/attention/1-3-dot-product')
+  })
+
+  it('does not link a term to the lesson the learner is reading', async () => {
+    render(
+      <LessonProvider lessonId="1.3" lessonCardIds={[]} recallCards={[]}>
+        <Term id="dot-product">скалярное произведение</Term>
+      </LessonProvider>,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'скалярное произведение' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent(/Урок 1\.3: /)
+    expect(screen.queryByRole('link')).toBeNull()
   })
 
   it('renders plain text for an unknown term', () => {

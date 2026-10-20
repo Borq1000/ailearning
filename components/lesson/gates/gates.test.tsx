@@ -50,6 +50,14 @@ describe('Check with options', () => {
 })
 
 describe('Check with a number', () => {
+  it('uses a text keyboard so a minus can be typed on iPhone', () => {
+    render(<Check id="q0" question="Сколько?" answer={-4} />)
+    const field = screen.getByRole('textbox', { name: 'Твой ответ' })
+    expect(field).toHaveAttribute('inputmode', 'text')
+    expect(field).toHaveAttribute('autocomplete', 'off')
+    expect(field).toHaveAttribute('spellcheck', 'false')
+  })
+
   it('accepts a decimal comma', async () => {
     render(<Check id="q2" question="Половина от единицы?" answer={0.5} />)
     await userEvent.type(screen.getByRole('textbox', { name: 'Твой ответ' }), '0,5')

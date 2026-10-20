@@ -38,6 +38,18 @@ describe('VectorTask without WebGL', () => {
     expect(z).toBeDisabled()
   })
 
+  it('uses text keyboards so a minus can be typed on iPhone', async () => {
+    render(<VectorTask id="vt4" target={[2, 1, 3]} start={[1, 1, 1]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    const fields = screen.getAllByRole('textbox', { name: /координата/ })
+    expect(fields).toHaveLength(3)
+    for (const field of fields) {
+      expect(field).toHaveAttribute('inputmode', 'text')
+      expect(field).toHaveAttribute('autocomplete', 'off')
+      expect(field).toHaveAttribute('spellcheck', 'false')
+    }
+  })
+
   it('explains what is off after a wrong try', async () => {
     render(<VectorTask id="vt2" target={[2, 1, 3]} start={[1, 1, 1]} />)
     await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))

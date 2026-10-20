@@ -25,7 +25,9 @@ export function LessonStep({ index, total, children }: { index: string; total: s
   const stepContext = useMemo(() => ({ index: i, registerGate }), [i, registerGate])
 
   const completed = lesson?.status === 'completed'
-  const unlockedStep = lesson?.unlockedStep ?? 0
+  // Сохранённый шаг может оказаться за концом урока (например, после того как из урока убрали шаг):
+  // тогда открыт последний шаг и на нём есть «Завершить урок».
+  const unlockedStep = Math.min(lesson?.unlockedStep ?? 0, n - 1)
   // До загрузки прогресса показываем всё — так совпадает серверный HTML (и его видят поисковики).
   const open = !hydrated || completed || i <= unlockedStep
   const teaser = hydrated && !completed && i === unlockedStep + 1
@@ -35,9 +37,14 @@ export function LessonStep({ index, total, children }: { index: string; total: s
 
   function goNext() {
     unlockStep(lessonId, i + 1)
-    requestAnimationFrame(() =>
-      document.querySelector(`[data-step="${i + 1}"]`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }),
-    )
+    requestAnimationFrame(() => {
+      const next = document.querySelector<HTMLElement>(`[data-step="${i + 1}"]`)
+      if (!next) return
+      const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      next.scrollIntoView?.({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+      // Фокус переходит на открытый шаг: читалка экрана начнёт с него, Tab пойдёт дальше от него.
+      next.focus({ preventScroll: true })
+    })
   }
 
   if (!open && !teaser) {
@@ -52,7 +59,12 @@ export function LessonStep({ index, total, children }: { index: string; total: s
 
   return (
     <StepContext.Provider value={stepContext}>
-      <section data-step={i} data-state={teaser ? 'teaser' : 'open'} className="lesson-step relative">
+      <section
+        data-step={i}
+        data-state={teaser ? 'teaser' : 'open'}
+        tabIndex={-1}
+        className="lesson-step relative focus:outline-none"
+      >
         {teaser ? (
           <>
             <div inert aria-hidden className="max-h-44 overflow-hidden opacity-50 blur-[3px] select-none">

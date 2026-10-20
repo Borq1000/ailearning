@@ -40,7 +40,9 @@ export function Faded({ id, title, steps }: { id: string; title?: string; steps:
                 <span className="text-muted">▢ =</span>
                 <input
                   type="text"
-                  inputMode="decimal"
+                  inputMode="text"
+                  autoComplete="off"
+                  spellCheck={false}
                   aria-label={`Пропуск в шаге ${i + 1}`}
                   className="text-input mt-0 w-24"
                   value={gate.revealed || (solved && values[i] === '') ? String(step.answer) : values[i]}

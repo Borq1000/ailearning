@@ -5,8 +5,31 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { attentionCourse } from '@/content/attention/course'
 import { GLOSSARY } from '@/content/glossary'
 import { findLessonById } from '@/lib/course/registry'
+import type { FlatLesson } from '@/lib/course/types'
 import { useProgress } from '@/lib/progress/store'
 import { useLessonOptional } from '@/components/lesson/engine/LessonContext'
+
+/** Строка под определением: где термин объясняется подробно. */
+function LessonNote({ lesson, known, here }: { lesson: FlatLesson; known: boolean; here: boolean }) {
+  const href = `/courses/attention/${lesson.slug}`
+  const ready = lesson.availability === 'ready'
+  if (known) {
+    // Термин уже знаком — ссылка ведёт назад, чтобы освежить урок. На открытый сейчас урок ссылаться незачем.
+    return ready && !here ? (
+      <Link href={href} className="mt-2 block text-xs text-ink-cyan underline">
+        Урок {lesson.id}: {lesson.title}
+      </Link>
+    ) : (
+      <span className="mt-2 block text-xs text-muted">{`Урок ${lesson.id}: ${lesson.title}`}</span>
+    )
+  }
+  if (!ready) return <span className="mt-2 block text-xs text-muted">{`Подробно — в уроке ${lesson.id} (скоро)`}</span>
+  return (
+    <Link href={href} className="mt-2 block text-xs text-ink-cyan underline">
+      Подробно — в уроке {lesson.id}: {lesson.title}
+    </Link>
+  )
+}
 
 export function Term({ id, children }: { id: string; children?: ReactNode }) {
   const entry = GLOSSARY[id]
@@ -35,7 +58,7 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
 
   if (!entry) return <>{children}</>
 
-  const known = studied || current?.lessonId === lesson?.id
+  const here = current?.lessonId === lesson?.id
 
   return (
     <span ref={rootRef} className="relative">
@@ -52,16 +75,7 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
         <span id={popoverId} role="dialog" aria-label={entry.term} className="term-popover">
           <span className="block font-serif text-base font-semibold">{entry.term}</span>
           <span className="mt-1 block text-sm">{entry.short}</span>
-          {lesson &&
-            (known || lesson.availability !== 'ready' ? (
-              <span className="mt-2 block text-xs text-muted">
-                {known ? `Урок ${lesson.id}: ${lesson.title}` : `Подробно — в уроке ${lesson.id} (скоро)`}
-              </span>
-            ) : (
-              <Link href={`/courses/attention/${lesson.slug}`} className="mt-2 block text-xs text-ink-cyan underline">
-                Подробно — в уроке {lesson.id}: {lesson.title}
-              </Link>
-            ))}
+          {lesson && <LessonNote lesson={lesson} known={studied || here} here={here} />}
         </span>
       )}
     </span>

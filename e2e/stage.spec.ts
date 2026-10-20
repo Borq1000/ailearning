@@ -10,4 +10,6 @@ test('a 3D stage mounts a WebGL canvas when scrolled into view', async ({ page }
     .first()
   await stage.scrollIntoViewIfNeeded()
   await expect(stage.locator('canvas')).toBeVisible({ timeout: 15_000 })
+  // OrbitControls ставит холсту touch-action: none — на телефоне вертикальный свайп должен листать страницу
+  await expect(stage.locator('canvas')).toHaveCSS('touch-action', 'pan-y')
 })

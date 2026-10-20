@@ -83,7 +83,9 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
       ) : (
         <input
           type="text"
-          inputMode="decimal"
+          inputMode="text"
+          autoComplete="off"
+          spellCheck={false}
           aria-label="Твой ответ"
           className="text-input"
           value={solved && text === '' ? answerText : text}

@@ -32,7 +32,9 @@ function NumberField({
   return (
     <input
       type="text"
-      inputMode="decimal"
+      inputMode="text"
+      autoComplete="off"
+      spellCheck={false}
       aria-label={label}
       className="stage-input"
       disabled={disabled}
