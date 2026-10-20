@@ -1,0 +1,61 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { emptyProgress } from '@/lib/progress/migrate'
+import { useProgress } from '@/lib/progress/store'
+import { CodeExercise } from './CodeExercise'
+
+const { run } = vi.hoisted(() => ({ run: vi.fn() }))
+
+vi.mock('./useRunner', () => ({ useRunner: () => run, RUN_TIMEOUT_MS: 2000 }))
+vi.mock('./CodeEditor', () => ({
+  CodeEditor: ({ value, onChange, ariaLabel }: { value: string; onChange: (v: string) => void; ariaLabel: string }) => (
+    <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />
+  ),
+}))
+
+const green = { status: 'ok', results: [{ name: 't1', pass: true, expectedText: '32', actualText: '32' }] }
+const red = { status: 'ok', results: [{ name: 't1', pass: false, expectedText: '32', actualText: '0' }] }
+
+beforeEach(() => {
+  useProgress.setState(emptyProgress())
+  run.mockReset()
+})
+
+describe('CodeExercise', () => {
+  it('passes the gate when every test is green', async () => {
+    run.mockResolvedValue(green)
+    render(<CodeExercise id="dot" />)
+    await userEvent.click(screen.getByRole('button', { name: '▶ Запустить тесты' }))
+    expect(await screen.findByText('1 из 1 теста пройдено')).toBeInTheDocument()
+    expect(useProgress.getState().gates['code:dot'].passed).toBe(true)
+  })
+
+  it('shows expected vs actual and offers the solution after three failed runs', async () => {
+    run.mockResolvedValue(red)
+    render(<CodeExercise id="dot" />)
+    const runButton = screen.getByRole('button', { name: '▶ Запустить тесты' })
+    await userEvent.click(runButton)
+    expect(await screen.findByText('ожидалось 32, получено 0')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Показать решение' })).toBeNull()
+    await userEvent.click(runButton)
+    await userEvent.click(runButton)
+    await userEvent.click(await screen.findByRole('button', { name: 'Показать решение' }))
+    expect(useProgress.getState().gates['code:dot']).toMatchObject({ passed: true, revealed: true })
+  })
+
+  it('explains a timeout as a probable infinite loop', async () => {
+    run.mockResolvedValue({ status: 'timeout' })
+    render(<CodeExercise id="dot" />)
+    await userEvent.click(screen.getByRole('button', { name: '▶ Запустить тесты' }))
+    expect(await screen.findByText(/Похоже на бесконечный цикл/)).toBeInTheDocument()
+  })
+
+  it('saves edits to progress', async () => {
+    render(<CodeExercise id="dot" />)
+    const editor = screen.getByRole('textbox', { name: 'Код: Напиши dot(a, b)' })
+    await userEvent.clear(editor)
+    await userEvent.type(editor, 'x')
+    expect(useProgress.getState().code.dot).toBe('x')
+  })
+})
