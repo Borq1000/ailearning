@@ -13,6 +13,10 @@ import { ExplainBack } from '@/components/lesson/gates/ExplainBack'
 import { LessonStep } from '@/components/lesson/engine/LessonStep'
 import { Predict } from '@/components/lesson/gates/Predict'
 import { Recall } from '@/components/lesson/gates/Recall'
+import { DotProduct3D } from '@/components/viz/vectors/DotProduct3D'
+import { VectorOps3D } from '@/components/viz/vectors/VectorOps3D'
+import { VectorSpace3D } from '@/components/viz/vectors/VectorSpace3D'
+import { VectorTask } from '@/components/viz/vectors/VectorTask'
 
 const components: MDXComponents = {
   AttentionArcs,
@@ -30,6 +34,10 @@ const components: MDXComponents = {
   Term,
   Sidenote,
   C,
+  VectorSpace3D,
+  VectorTask,
+  VectorOps3D,
+  DotProduct3D,
 }
 
 export function useMDXComponents(): MDXComponents {
