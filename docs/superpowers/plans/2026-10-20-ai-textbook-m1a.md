@@ -67,20 +67,27 @@ lib/
   theme/     concepts.ts
   viz/       vector-helpers.ts
   code/      types.ts · approx-equal.ts · execute.ts
-components/
-  progress/  ProgressHydrator.tsx
-  lesson/    LessonContext.tsx · StepContext.ts · useGate.ts · LessonStep.tsx · LessonPager.tsx
-             Check.tsx · Predict.tsx · ExplainBack.tsx · CardView.tsx · Recall.tsx · Summary.tsx
-             Hook.tsx · WorkedExample.tsx · Faded.tsx · Levels.tsx · Term.tsx · Sidenote.tsx · C.tsx
-             NextWordGame.tsx
-  review/    ReviewDeck.tsx
-  viz/       Observatory.tsx · stage-context.ts · InfoCard.tsx · SceneCanvas.tsx · Stage.tsx
-             StageFallbackNote.tsx · AttentionArcs.tsx · CourseMap.tsx · WordCloud3D.tsx
-             VectorInputs.tsx · VectorScene.tsx · VectorSpace3D.tsx · VectorTask.tsx
-             VectorOps3D.tsx · DotProduct3D.tsx
-             three/ Arrow3D.tsx · Axes3D.tsx · DragHandle.tsx
-  code/      CodeEditor.tsx · useRunner.ts · runner.worker.ts · CodeExercise.tsx
-  layout/    TopBar.tsx · ReviewBadge.tsx · CourseNav.tsx · StorageBanner.tsx · ContinueButton.tsx · CourseCard.tsx
+components/                        # компоненты разложены по доменам; между доменами — импорты через @/components/…
+  progress/          ProgressHydrator.tsx                                   # загрузка прогресса
+  lesson/                                                                   # урок
+    engine/          LessonContext.tsx · StepContext.ts · useGate.ts · LessonStep.tsx
+                     LessonStatusBadge.tsx · LessonPager.tsx                # движок шагов и «ворот»
+    gates/           Check.tsx · Predict.tsx · ExplainBack.tsx · Faded.tsx
+                     Recall.tsx · NextWordGame.tsx                          # вопросы, закрывающие шаг
+    blocks/          Hook.tsx · WorkedExample.tsx · Levels.tsx · Term.tsx
+                     Sidenote.tsx · C.tsx · Summary.tsx                     # контентные блоки
+  review/            CardView.tsx · ReviewDeck.tsx                          # карточки и интервальное повторение
+  course/            CourseMap.tsx · CourseNav.tsx · ContinueButton.tsx · CourseCard.tsx   # навигация по курсу
+  viz/                                                                      # визуализации
+    stage/           Observatory.tsx · stage-context.ts · InfoCard.tsx · SceneCanvas.tsx
+                     Stage.tsx · StageFallbackNote.tsx                      # «обсерватория» и 3D-сцена
+    vectors/         VectorScene.tsx · LazyVectorScene.tsx · VectorInputs.tsx · VectorSpace3D.tsx
+                     VectorTask.tsx · VectorOps3D.tsx · DotProduct3D.tsx
+                     three/ Arrow3D.tsx · Axes3D.tsx · DragHandle.tsx       # векторы в 3D
+    attention/       AttentionArcs.tsx                                      # внимание
+    words/           WordCloud3D.tsx · WordCloudScene.tsx                   # облако слов
+  code/              CodeEditor.tsx · useRunner.ts · runner.worker.ts · CodeExercise.tsx   # упражнения с кодом
+  layout/            TopBar.tsx · ReviewBadge.tsx · StorageBanner.tsx       # каркас страницы
 content/
   glossary.ts · content.test.ts
   home/word-cloud.ts
@@ -2250,7 +2257,7 @@ git commit -m "feat(content): toy 3D model that resolves the «он» riddle wit
 ### Task 7: MDX-конвейер: шаги из `---`, загрузка урока, страница урока
 
 **Files:**
-- Create: `lib/mdx/remark-steps.mjs`, `lib/mdx/remark-steps.d.mts`, `lib/course/lesson-module.ts`, `components/lesson/LessonStep.tsx` (временная версия), `components/lesson/LessonPager.tsx`, `app/courses/[course]/[lesson]/page.tsx`, `content/attention/lessons/0-1-riddle.mdx` (черновик)
+- Create: `lib/mdx/remark-steps.mjs`, `lib/mdx/remark-steps.d.mts`, `lib/course/lesson-module.ts`, `components/lesson/engine/LessonStep.tsx` (временная версия), `components/lesson/engine/LessonPager.tsx`, `app/courses/[course]/[lesson]/page.tsx`, `content/attention/lessons/0-1-riddle.mdx` (черновик)
 - Modify: `next.config.ts`, `mdx-components.tsx`, `content/attention/course.ts`
 - Test: `lib/mdx/remark-steps.test.tsx`
 
@@ -2396,7 +2403,7 @@ const withMDX = createMDX({
 
 - [ ] **Step 6: Временный `LessonStep`, реестр MDX-компонентов, загрузчик урока, навигация**
 
-`components/lesson/LessonStep.tsx` (временная версия; гейтинг добавит Task 8):
+`components/lesson/engine/LessonStep.tsx` (временная версия; гейтинг добавит Task 8):
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -2414,7 +2421,7 @@ export function LessonStep({ index, children }: { index: string; total: string; 
 
 ```tsx
 import type { MDXComponents } from 'mdx/types'
-import { LessonStep } from '@/components/lesson/LessonStep'
+import { LessonStep } from '@/components/lesson/engine/LessonStep'
 
 const components: MDXComponents = {
   LessonStep,
@@ -2446,7 +2453,7 @@ export async function loadLessonModule(courseId: string, slug: string): Promise<
 }
 ```
 
-`components/lesson/LessonPager.tsx`:
+`components/lesson/engine/LessonPager.tsx`:
 
 ```tsx
 import Link from 'next/link'
@@ -2488,7 +2495,7 @@ export function LessonPager({ courseId, prev, next }: { courseId: string; prev?:
 ```tsx
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { LessonPager } from '@/components/lesson/LessonPager'
+import { LessonPager } from '@/components/lesson/engine/LessonPager'
 import { loadLessonModule } from '@/lib/course/lesson-module'
 import { findLesson, getCourse, listCourses, neighbors, readyLessons } from '@/lib/course/registry'
 
@@ -2605,9 +2612,9 @@ git commit -m "feat(lesson): MDX pipeline splitting lessons into steps, lesson r
 ### Task 8: Движок урока: шаги, «ворота», прогресс
 
 **Files:**
-- Create: `lib/react/use-isomorphic-layout-effect.ts`, `components/lesson/LessonContext.tsx`, `components/lesson/StepContext.ts`, `components/lesson/useGate.ts`, `components/lesson/LessonStatusBadge.tsx`
-- Modify: `components/lesson/LessonStep.tsx` (полная замена), `app/courses/[course]/[lesson]/page.tsx`, `app/layout.tsx`
-- Test: `components/lesson/LessonStep.test.tsx`
+- Create: `lib/react/use-isomorphic-layout-effect.ts`, `components/lesson/engine/LessonContext.tsx`, `components/lesson/engine/StepContext.ts`, `components/lesson/engine/useGate.ts`, `components/lesson/engine/LessonStatusBadge.tsx`
+- Modify: `components/lesson/engine/LessonStep.tsx` (полная замена), `app/courses/[course]/[lesson]/page.tsx`, `app/layout.tsx`
+- Test: `components/lesson/engine/LessonStep.test.tsx`
 
 **Interfaces:**
 - Consumes: `useProgress`, `useHydrated`, `todayISO` (Tasks 4–5), `lessonsBefore`, `loadLessonModule` (Tasks 3, 7), `ProgressHydrator` (Task 5).
@@ -2622,7 +2629,7 @@ git commit -m "feat(lesson): MDX pipeline splitting lessons into steps, lesson r
 
 - [ ] **Step 1: Написать падающий тест**
 
-`components/lesson/LessonStep.test.tsx`:
+`components/lesson/engine/LessonStep.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -2630,9 +2637,9 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
-import { LessonProvider } from './LessonContext'
+import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { LessonStep } from './LessonStep'
-import { useGate } from './useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 
 function FakeGate({ id }: { id: string }) {
   const gate = useGate(id)
@@ -2712,7 +2719,7 @@ describe('LessonStep', () => {
 
 - [ ] **Step 2: Запустить тест и убедиться, что он падает**
 
-Run: `npm test -- components/lesson/LessonStep`
+Run: `npm test -- components/lesson/engine/LessonStep`
 Expected: FAIL — `Failed to resolve import "./LessonContext"`.
 
 - [ ] **Step 3: Контексты и хук «ворот»**
@@ -2726,7 +2733,7 @@ import { useEffect, useLayoutEffect } from 'react'
 export const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 ```
 
-`components/lesson/LessonContext.tsx`:
+`components/lesson/engine/LessonContext.tsx`:
 
 ```tsx
 'use client'
@@ -2759,7 +2766,7 @@ export function useLessonOptional(): LessonContextValue | null {
 }
 ```
 
-`components/lesson/StepContext.ts`:
+`components/lesson/engine/StepContext.ts`:
 
 ```ts
 'use client'
@@ -2779,7 +2786,7 @@ export function useStep(): StepContextValue | null {
 }
 ```
 
-`components/lesson/useGate.ts`:
+`components/lesson/engine/useGate.ts`:
 
 ```ts
 'use client'
@@ -2828,7 +2835,7 @@ export function useGate(id: string): GateApi {
 
 - [ ] **Step 4: `LessonStep` с гейтингом** (полностью заменить файл)
 
-`components/lesson/LessonStep.tsx`:
+`components/lesson/engine/LessonStep.tsx`:
 
 ```tsx
 'use client'
@@ -2837,7 +2844,7 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { todayISO } from '@/lib/progress/scheduler'
 import { useProgress } from '@/lib/progress/store'
 import { useHydrated } from '@/lib/progress/useHydrated'
-import { useLesson } from './LessonContext'
+import { useLesson } from '@/components/lesson/engine/LessonContext'
 import { StepContext } from './StepContext'
 
 export function LessonStep({ index, total, children }: { index: string; total: string; children?: ReactNode }) {
@@ -2923,12 +2930,12 @@ export function LessonStep({ index, total, children }: { index: string; total: s
 
 - [ ] **Step 5: Запустить тест**
 
-Run: `npm test -- components/lesson/LessonStep`
+Run: `npm test -- components/lesson/engine/LessonStep`
 Expected: PASS (5 tests).
 
 - [ ] **Step 6: Значок «урок пройден», провайдер на странице, гидратор в layout**
 
-`components/lesson/LessonStatusBadge.tsx`:
+`components/lesson/engine/LessonStatusBadge.tsx`:
 
 ```tsx
 'use client'
@@ -2951,8 +2958,8 @@ export function LessonStatusBadge({ lessonId }: { lessonId: string }) {
 `app/courses/[course]/[lesson]/page.tsx` — изменить импорты и тело `LessonPage`:
 
 ```tsx
-import { LessonProvider } from '@/components/lesson/LessonContext'
-import { LessonStatusBadge } from '@/components/lesson/LessonStatusBadge'
+import { LessonProvider } from '@/components/lesson/engine/LessonContext'
+import { LessonStatusBadge } from '@/components/lesson/engine/LessonStatusBadge'
 import { findLesson, getCourse, lessonsBefore, listCourses, neighbors, readyLessons } from '@/lib/course/registry'
 ```
 
@@ -3029,9 +3036,9 @@ git commit -m "feat(lesson): progressive steps with gates, lesson context and pe
 ### Task 9: «Ворота» вопросов: `Check`, `Predict`, `ExplainBack`
 
 **Files:**
-- Create: `lib/parse-number.ts`, `components/lesson/Check.tsx`, `components/lesson/Predict.tsx`, `components/lesson/ExplainBack.tsx`
+- Create: `lib/parse-number.ts`, `components/lesson/gates/Check.tsx`, `components/lesson/gates/Predict.tsx`, `components/lesson/gates/ExplainBack.tsx`
 - Modify: `mdx-components.tsx`
-- Test: `lib/parse-number.test.ts`, `components/lesson/gates.test.tsx`
+- Test: `lib/parse-number.test.ts`, `components/lesson/gates/gates.test.tsx`
 
 **Interfaces:**
 - Consumes: `useGate` (Task 8), `useProgress` (Task 5), `Card` (Task 3).
@@ -3071,7 +3078,7 @@ describe('parseNumber', () => {
 })
 ```
 
-`components/lesson/gates.test.tsx`:
+`components/lesson/gates/gates.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -3186,7 +3193,7 @@ describe('ExplainBack', () => {
 
 - [ ] **Step 2: Запустить тесты и убедиться, что они падают**
 
-Run: `npm test -- lib/parse-number components/lesson/gates`
+Run: `npm test -- lib/parse-number components/lesson/gates/gates`
 Expected: FAIL — модули не найдены.
 
 - [ ] **Step 3: `parseNumber`**
@@ -3207,7 +3214,7 @@ export function parseNumber(input: string): number | null {
 
 - [ ] **Step 4: `Check`**
 
-`components/lesson/Check.tsx`:
+`components/lesson/gates/Check.tsx`:
 
 ```tsx
 'use client'
@@ -3215,7 +3222,7 @@ export function parseNumber(input: string): number | null {
 import { useState, type ReactNode } from 'react'
 import type { Card } from '@/lib/course/types'
 import { parseNumber } from '@/lib/parse-number'
-import { useGate } from './useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 
 export interface CheckProps {
   id: string
@@ -3353,13 +3360,13 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
 
 - [ ] **Step 5: `Predict`**
 
-`components/lesson/Predict.tsx`:
+`components/lesson/gates/Predict.tsx`:
 
 ```tsx
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { useGate } from './useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 
 export interface PredictProps {
   id: string
@@ -3435,14 +3442,14 @@ export function Predict({ id, question, options, answer, children }: PredictProp
 
 - [ ] **Step 6: `ExplainBack`**
 
-`components/lesson/ExplainBack.tsx`:
+`components/lesson/gates/ExplainBack.tsx`:
 
 ```tsx
 'use client'
 
 import { useState, type ReactNode } from 'react'
 import { useProgress } from '@/lib/progress/store'
-import { useGate } from './useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 
 const MIN_LENGTH = 20
 
@@ -3525,10 +3532,10 @@ export function ExplainBack({ id, prompt, reference, points }: ExplainBackProps)
 
 ```tsx
 import type { MDXComponents } from 'mdx/types'
-import { Check } from '@/components/lesson/Check'
-import { ExplainBack } from '@/components/lesson/ExplainBack'
-import { LessonStep } from '@/components/lesson/LessonStep'
-import { Predict } from '@/components/lesson/Predict'
+import { Check } from '@/components/lesson/gates/Check'
+import { ExplainBack } from '@/components/lesson/gates/ExplainBack'
+import { LessonStep } from '@/components/lesson/engine/LessonStep'
+import { Predict } from '@/components/lesson/gates/Predict'
 
 const components: MDXComponents = {
   LessonStep,
@@ -3544,7 +3551,7 @@ export function useMDXComponents(): MDXComponents {
 
 - [ ] **Step 8: Запустить тесты**
 
-Run: `npm test -- lib/parse-number components/lesson/gates`
+Run: `npm test -- lib/parse-number components/lesson/gates/gates`
 Expected: PASS.
 
 - [ ] **Step 9: Commit**
@@ -3559,9 +3566,9 @@ git commit -m "feat(lesson): Check, Predict and ExplainBack gates with forgiving
 ### Task 10: Разминка, итог урока и страница повторения
 
 **Files:**
-- Create: `lib/plural.ts`, `components/lesson/CardView.tsx`, `components/lesson/Recall.tsx`, `components/lesson/Summary.tsx`, `components/review/ReviewDeck.tsx`, `app/review/page.tsx`
+- Create: `lib/plural.ts`, `components/review/CardView.tsx`, `components/lesson/gates/Recall.tsx`, `components/lesson/blocks/Summary.tsx`, `components/review/ReviewDeck.tsx`, `app/review/page.tsx`
 - Modify: `mdx-components.tsx`
-- Test: `lib/plural.test.ts`, `components/lesson/recall.test.tsx`, `components/review/ReviewDeck.test.tsx`
+- Test: `lib/plural.test.ts`, `components/lesson/gates/recall.test.tsx`, `components/review/ReviewDeck.test.tsx`
 
 **Interfaces:**
 - Consumes: `useGate`, `useLesson` (Task 8), `useProgress`, `useHydrated`, `pickRecallCards`, `todayISO`, `isDue` (Tasks 4–5), `loadLessonModule`, `listCourses`, `readyLessons` (Tasks 3, 7).
@@ -3603,7 +3610,7 @@ describe('plural', () => {
 })
 ```
 
-`components/lesson/recall.test.tsx`:
+`components/lesson/gates/recall.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -3612,9 +3619,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Card } from '@/lib/course/types'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
-import { LessonProvider } from './LessonContext'
+import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { Recall } from './Recall'
-import { Summary } from './Summary'
+import { Summary } from '@/components/lesson/blocks/Summary'
 
 const cards: Card[] = [
   { id: 'c-a', kind: 'flip', prompt: 'Вопрос А', answer: 'Ответ А' },
@@ -3732,7 +3739,7 @@ describe('ReviewDeck', () => {
 
 - [ ] **Step 2: Запустить тесты и убедиться, что они падают**
 
-Run: `npm test -- lib/plural components/lesson/recall components/review`
+Run: `npm test -- lib/plural components/lesson/gates/recall components/review`
 Expected: FAIL — модули не найдены.
 
 - [ ] **Step 3: `plural` и `CardView`**
@@ -3751,7 +3758,7 @@ export function plural(n: number, forms: readonly [string, string, string]): str
 }
 ```
 
-`components/lesson/CardView.tsx`:
+`components/review/CardView.tsx`:
 
 ```tsx
 'use client'
@@ -3820,7 +3827,7 @@ export function CardView({ card, onAnswer }: { card: Card; onAnswer: (correct: b
 
 - [ ] **Step 4: `Recall` и `Summary`**
 
-`components/lesson/Recall.tsx`:
+`components/lesson/gates/Recall.tsx`:
 
 ```tsx
 'use client'
@@ -3830,9 +3837,9 @@ import type { Card } from '@/lib/course/types'
 import { pickRecallCards, todayISO } from '@/lib/progress/scheduler'
 import { useProgress } from '@/lib/progress/store'
 import { useHydrated } from '@/lib/progress/useHydrated'
-import { CardView } from './CardView'
-import { useLesson } from './LessonContext'
-import { useGate } from './useGate'
+import { CardView } from '@/components/review/CardView'
+import { useLesson } from '@/components/lesson/engine/LessonContext'
+import { useGate } from '@/components/lesson/engine/useGate'
 
 export function Recall({ id }: { id: string }) {
   const { passed, pass } = useGate(id)
@@ -3894,7 +3901,7 @@ export function Recall({ id }: { id: string }) {
 }
 ```
 
-`components/lesson/Summary.tsx`:
+`components/lesson/blocks/Summary.tsx`:
 
 ```tsx
 'use client'
@@ -3902,7 +3909,7 @@ export function Recall({ id }: { id: string }) {
 import type { Card } from '@/lib/course/types'
 import { plural } from '@/lib/plural'
 import { useProgress } from '@/lib/progress/store'
-import { useLesson } from './LessonContext'
+import { useLesson } from '@/components/lesson/engine/LessonContext'
 
 export function Summary({ points, cards }: { points: string[]; cards: Card[] }) {
   const { lessonId } = useLesson()
@@ -3936,7 +3943,7 @@ export function Summary({ points, cards }: { points: string[]; cards: Card[] }) 
 'use client'
 
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
-import { CardView } from '@/components/lesson/CardView'
+import { CardView } from '@/components/review/CardView'
 import type { Card } from '@/lib/course/types'
 import { plural } from '@/lib/plural'
 import { isDue, todayISO } from '@/lib/progress/scheduler'
@@ -4103,8 +4110,8 @@ export default async function ReviewPage() {
 В `mdx-components.tsx` добавить импорты и ключи (итоговый объект):
 
 ```tsx
-import { Recall } from '@/components/lesson/Recall'
-import { Summary } from '@/components/lesson/Summary'
+import { Recall } from '@/components/lesson/gates/Recall'
+import { Summary } from '@/components/lesson/blocks/Summary'
 ```
 
 ```tsx
@@ -4135,9 +4142,9 @@ git commit -m "feat(review): recall warm-up, lesson summary and spaced-repetitio
 ### Task 11: Контентные блоки: крючок, примеры, уровни, термины, заметки
 
 **Files:**
-- Create: `lib/theme/concepts.ts`, `content/glossary.ts`, `components/lesson/Hook.tsx`, `components/lesson/WorkedExample.tsx`, `components/lesson/Faded.tsx`, `components/lesson/Levels.tsx`, `components/lesson/Term.tsx`, `components/lesson/Sidenote.tsx`, `components/lesson/C.tsx`
+- Create: `lib/theme/concepts.ts`, `content/glossary.ts`, `components/lesson/blocks/Hook.tsx`, `components/lesson/blocks/WorkedExample.tsx`, `components/lesson/gates/Faded.tsx`, `components/lesson/blocks/Levels.tsx`, `components/lesson/blocks/Term.tsx`, `components/lesson/blocks/Sidenote.tsx`, `components/lesson/blocks/C.tsx`
 - Modify: `mdx-components.tsx`
-- Test: `components/lesson/content-blocks.test.tsx`
+- Test: `components/lesson/blocks/content-blocks.test.tsx`
 
 **Interfaces:**
 - Consumes: `useGate`, `useLessonOptional` (Task 8), `parseNumber` (Task 9), `attentionCourse`, `findLessonById` (Task 3), `useProgress` (Task 5).
@@ -4148,7 +4155,7 @@ git commit -m "feat(review): recall warm-up, lesson summary and spaced-repetitio
 
 - [ ] **Step 1: Написать падающие тесты**
 
-`components/lesson/content-blocks.test.tsx`:
+`components/lesson/blocks/content-blocks.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -4157,7 +4164,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { GLOSSARY } from '@/content/glossary'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
-import { Faded } from './Faded'
+import { Faded } from '@/components/lesson/gates/Faded'
 import { Level, Levels } from './Levels'
 import { Term } from './Term'
 import { WorkedExample } from './WorkedExample'
@@ -4253,7 +4260,7 @@ describe('Term', () => {
 
 - [ ] **Step 2: Запустить тесты и убедиться, что они падают**
 
-Run: `npm test -- components/lesson/content-blocks`
+Run: `npm test -- components/lesson/blocks/content-blocks`
 Expected: FAIL — модули не найдены.
 
 - [ ] **Step 3: Цвета понятий и глоссарий**
@@ -4397,7 +4404,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = Object.fromEntries(entrie
 
 - [ ] **Step 4: Простые блоки — `Hook`, `Sidenote`, `C`**
 
-`components/lesson/Hook.tsx`:
+`components/lesson/blocks/Hook.tsx`:
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -4412,7 +4419,7 @@ export function Hook({ title = 'Загадка', children }: { title?: string; c
 }
 ```
 
-`components/lesson/Sidenote.tsx`:
+`components/lesson/blocks/Sidenote.tsx`:
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -4423,7 +4430,7 @@ export function Sidenote({ children }: { children?: ReactNode }) {
 }
 ```
 
-`components/lesson/C.tsx`:
+`components/lesson/blocks/C.tsx`:
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -4442,7 +4449,7 @@ export function C({ k, children }: { k: ConceptKey; children?: ReactNode }) {
 
 - [ ] **Step 5: `WorkedExample`, `Faded`, `Levels`, `Term`**
 
-`components/lesson/WorkedExample.tsx`:
+`components/lesson/blocks/WorkedExample.tsx`:
 
 ```tsx
 'use client'
@@ -4480,14 +4487,14 @@ export function WorkedExample({ title, children }: { title?: string; children?: 
 }
 ```
 
-`components/lesson/Faded.tsx`:
+`components/lesson/gates/Faded.tsx`:
 
 ```tsx
 'use client'
 
 import { useState } from 'react'
 import { parseNumber } from '@/lib/parse-number'
-import { useGate } from './useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 
 export interface FadedStep {
   text: string
@@ -4565,7 +4572,7 @@ export function Faded({ id, title, steps }: { id: string; title?: string; steps:
 }
 ```
 
-`components/lesson/Levels.tsx`:
+`components/lesson/blocks/Levels.tsx`:
 
 ```tsx
 'use client'
@@ -4608,7 +4615,7 @@ export function Levels({ children }: { children?: ReactNode }) {
 }
 ```
 
-`components/lesson/Term.tsx`:
+`components/lesson/blocks/Term.tsx`:
 
 ```tsx
 'use client'
@@ -4619,7 +4626,7 @@ import { attentionCourse } from '@/content/attention/course'
 import { GLOSSARY } from '@/content/glossary'
 import { findLessonById } from '@/lib/course/registry'
 import { useProgress } from '@/lib/progress/store'
-import { useLessonOptional } from './LessonContext'
+import { useLessonOptional } from '@/components/lesson/engine/LessonContext'
 
 export function Term({ id, children }: { id: string; children?: ReactNode }) {
   const entry = GLOSSARY[id]
@@ -4689,13 +4696,13 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
 В `mdx-components.tsx` добавить импорты и ключи (итоговый объект):
 
 ```tsx
-import { C } from '@/components/lesson/C'
-import { Faded } from '@/components/lesson/Faded'
-import { Hook } from '@/components/lesson/Hook'
-import { Level, Levels } from '@/components/lesson/Levels'
-import { Sidenote } from '@/components/lesson/Sidenote'
-import { Term } from '@/components/lesson/Term'
-import { WorkedExample } from '@/components/lesson/WorkedExample'
+import { C } from '@/components/lesson/blocks/C'
+import { Faded } from '@/components/lesson/gates/Faded'
+import { Hook } from '@/components/lesson/blocks/Hook'
+import { Level, Levels } from '@/components/lesson/blocks/Levels'
+import { Sidenote } from '@/components/lesson/blocks/Sidenote'
+import { Term } from '@/components/lesson/blocks/Term'
+import { WorkedExample } from '@/components/lesson/blocks/WorkedExample'
 ```
 
 ```tsx
@@ -4719,7 +4726,7 @@ const components: MDXComponents = {
 
 - [ ] **Step 7: Запустить тесты**
 
-Run: `npm test -- components/lesson/content-blocks`
+Run: `npm test -- components/lesson/blocks/content-blocks`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -4734,8 +4741,8 @@ git commit -m "feat(lesson): hook, worked/faded examples, explanation levels, gl
 ### Task 12: «Обсерватория»: ленивые 3D-сцены с запасным вариантом
 
 **Files:**
-- Create: `lib/webgl.ts`, `components/viz/Observatory.tsx`, `components/viz/stage-context.ts`, `components/viz/InfoCard.tsx`, `components/viz/SceneCanvas.tsx`, `components/viz/Stage.tsx`, `components/viz/StageFallbackNote.tsx`
-- Test: `components/viz/stage.test.tsx`
+- Create: `lib/webgl.ts`, `components/viz/stage/Observatory.tsx`, `components/viz/stage/stage-context.ts`, `components/viz/stage/InfoCard.tsx`, `components/viz/stage/SceneCanvas.tsx`, `components/viz/stage/Stage.tsx`, `components/viz/stage/StageFallbackNote.tsx`
+- Test: `components/viz/stage/stage.test.tsx`
 
 **Interfaces:**
 - Produces:
@@ -4748,14 +4755,14 @@ git commit -m "feat(lesson): hook, worked/faded examples, explanation levels, gl
 
 - [ ] **Step 1: Написать падающий тест**
 
-`components/viz/stage.test.tsx`:
+`components/viz/stage/stage.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { InfoCard } from './InfoCard'
-import { Stage } from './Stage'
+import { Stage } from '@/components/viz/stage/Stage'
 
 describe('Stage', () => {
   it('shows the fallback and keeps DOM controls when WebGL is unavailable', async () => {
@@ -4784,7 +4791,7 @@ describe('InfoCard', () => {
 
 - [ ] **Step 2: Запустить тест и убедиться, что он падает**
 
-Run: `npm test -- components/viz/stage`
+Run: `npm test -- components/viz/stage/stage`
 Expected: FAIL — модули не найдены.
 
 - [ ] **Step 3: Реализовать**
@@ -4803,7 +4810,7 @@ export function detectWebGL(): boolean {
 }
 ```
 
-`components/viz/Observatory.tsx`:
+`components/viz/stage/Observatory.tsx`:
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -4835,7 +4842,7 @@ export function Observatory({
 }
 ```
 
-`components/viz/stage-context.ts`:
+`components/viz/stage/stage-context.ts`:
 
 ```ts
 'use client'
@@ -4860,10 +4867,10 @@ export function useStageInfo(): StageInfoApi | null {
 }
 ```
 
-`components/viz/InfoCard.tsx`:
+`components/viz/stage/InfoCard.tsx`:
 
 ```tsx
-import type { StageInfo } from './stage-context'
+import type { StageInfo } from '@/components/viz/stage/stage-context'
 
 export function InfoCard({ info, onClose }: { info: StageInfo; onClose: () => void }) {
   return (
@@ -4880,7 +4887,7 @@ export function InfoCard({ info, onClose }: { info: StageInfo; onClose: () => vo
 }
 ```
 
-`components/viz/SceneCanvas.tsx`:
+`components/viz/stage/SceneCanvas.tsx`:
 
 ```tsx
 'use client'
@@ -4919,7 +4926,7 @@ export default function SceneCanvas({ camera = [5, 4, 6], frameloop = 'demand', 
 }
 ```
 
-`components/viz/StageFallbackNote.tsx`:
+`components/viz/stage/StageFallbackNote.tsx`:
 
 ```tsx
 export function StageFallbackNote() {
@@ -4931,7 +4938,7 @@ export function StageFallbackNote() {
 }
 ```
 
-`components/viz/Stage.tsx`:
+`components/viz/stage/Stage.tsx`:
 
 ```tsx
 'use client'
@@ -4940,8 +4947,8 @@ import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { detectWebGL } from '@/lib/webgl'
 import { InfoCard } from './InfoCard'
-import { Observatory } from './Observatory'
-import { StageInfoContext, type StageInfo } from './stage-context'
+import { Observatory } from '@/components/viz/stage/Observatory'
+import { StageInfoContext, type StageInfo } from '@/components/viz/stage/stage-context'
 
 function StageLoading() {
   return <div className="flex h-full items-center justify-center font-mono text-xs text-space-muted">Загружаю 3D…</div>
@@ -5041,7 +5048,7 @@ export function Stage({
 
 - [ ] **Step 4: Запустить тест**
 
-Run: `npm test -- components/viz/stage`
+Run: `npm test -- components/viz/stage/stage`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Commit**
@@ -5056,9 +5063,9 @@ git commit -m "feat(viz): lazy WebGL stage with observatory frame, info cards an
 ### Task 13: Дуги внимания (`AttentionArcs`)
 
 **Files:**
-- Create: `components/viz/AttentionArcs.tsx`
+- Create: `components/viz/attention/AttentionArcs.tsx`
 - Modify: `mdx-components.tsx`
-- Test: `components/viz/AttentionArcs.test.tsx`
+- Test: `components/viz/attention/AttentionArcs.test.tsx`
 
 **Interfaces:**
 - Consumes: `pronounAttention`, `ADJECTIVE`, `Variant` (Task 6), `CONCEPTS` (Task 11), `Observatory` (Task 12).
@@ -5066,7 +5073,7 @@ git commit -m "feat(viz): lazy WebGL stage with observatory frame, info cards an
 
 - [ ] **Step 1: Написать падающий тест**
 
-`components/viz/AttentionArcs.test.tsx`:
+`components/viz/attention/AttentionArcs.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -5101,12 +5108,12 @@ describe('AttentionArcs', () => {
 
 - [ ] **Step 2: Запустить тест и убедиться, что он падает**
 
-Run: `npm test -- components/viz/AttentionArcs`
+Run: `npm test -- components/viz/attention/AttentionArcs`
 Expected: FAIL — `Failed to resolve import "./AttentionArcs"`.
 
 - [ ] **Step 3: Реализовать**
 
-`components/viz/AttentionArcs.tsx`:
+`components/viz/attention/AttentionArcs.tsx`:
 
 ```tsx
 'use client'
@@ -5114,7 +5121,7 @@ Expected: FAIL — `Failed to resolve import "./AttentionArcs"`.
 import { useMemo, useState, type ReactNode } from 'react'
 import { ADJECTIVE, pronounAttention, type Variant } from '@/content/attention/toy-model'
 import { CONCEPTS } from '@/lib/theme/concepts'
-import { Observatory } from './Observatory'
+import { Observatory } from '@/components/viz/stage/Observatory'
 
 const CHAR = 9.4
 const PAD = 20
@@ -5216,11 +5223,11 @@ export function AttentionArcs({
 
 - [ ] **Step 4: Зарегистрировать для MDX**
 
-В `mdx-components.tsx` добавить `import { AttentionArcs } from '@/components/viz/AttentionArcs'` и ключ `AttentionArcs` в объект `components`.
+В `mdx-components.tsx` добавить `import { AttentionArcs } from '@/components/viz/attention/AttentionArcs'` и ключ `AttentionArcs` в объект `components`.
 
 - [ ] **Step 5: Запустить тест**
 
-Run: `npm test -- components/viz/AttentionArcs`
+Run: `npm test -- components/viz/attention/AttentionArcs`
 Expected: PASS (4 tests).
 
 - [ ] **Step 6: Commit**
@@ -5236,9 +5243,9 @@ git commit -m "feat(viz): interactive attention arcs for the «он» riddle" -m
 R3F-модули (`VectorScene` и всё, что внутри `three/`) подключаются **только** через `next/dynamic`. Так three.js не попадает в основной бандл страницы урока и грузится, лишь когда сцена появилась на экране (требование Performance ≥ 85). DOM-часть (поля координат, показания) лёгкая и работает без WebGL.
 
 **Files:**
-- Create: `lib/viz/vector-helpers.ts`, `components/viz/three/Arrow3D.tsx`, `components/viz/three/Axes3D.tsx`, `components/viz/three/DragHandle.tsx`, `components/viz/VectorScene.tsx`, `components/viz/LazyVectorScene.tsx`, `components/viz/VectorInputs.tsx`, `components/viz/VectorSpace3D.tsx`, `components/viz/VectorTask.tsx`, `components/viz/VectorOps3D.tsx`, `components/viz/DotProduct3D.tsx`
+- Create: `lib/viz/vector-helpers.ts`, `components/viz/vectors/three/Arrow3D.tsx`, `components/viz/vectors/three/Axes3D.tsx`, `components/viz/vectors/three/DragHandle.tsx`, `components/viz/vectors/VectorScene.tsx`, `components/viz/vectors/LazyVectorScene.tsx`, `components/viz/vectors/VectorInputs.tsx`, `components/viz/vectors/VectorSpace3D.tsx`, `components/viz/vectors/VectorTask.tsx`, `components/viz/vectors/VectorOps3D.tsx`, `components/viz/vectors/DotProduct3D.tsx`
 - Modify: `mdx-components.tsx`
-- Test: `lib/viz/vector-helpers.test.ts`, `components/viz/vectors.test.tsx`
+- Test: `lib/viz/vector-helpers.test.ts`, `components/viz/vectors/vectors.test.tsx`
 
 **Interfaces:**
 - Consumes: `lib/math` (Task 2), `parseNumber` (Task 9), `CONCEPTS` (Task 11), `Stage`, `StageFallbackNote`, `useStageInfo`, `StageInfo` (Task 12), `useGate` (Task 8).
@@ -5308,7 +5315,7 @@ describe('dot product helpers', () => {
 })
 ```
 
-`components/viz/vectors.test.tsx` (в jsdom нет WebGL, поэтому проверяем именно запасной режим с DOM-полями):
+`components/viz/vectors/vectors.test.tsx` (в jsdom нет WebGL, поэтому проверяем именно запасной режим с DOM-полями):
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -5360,7 +5367,7 @@ describe('DotProduct3D without WebGL', () => {
 
 - [ ] **Step 2: Запустить тесты и убедиться, что они падают**
 
-Run: `npm test -- lib/viz components/viz/vectors`
+Run: `npm test -- lib/viz components/viz/vectors/vectors`
 Expected: FAIL — модули не найдены.
 
 - [ ] **Step 3: Вспомогательные функции**
@@ -5435,7 +5442,7 @@ export function arcPoints(a: Vec, b: Vec, radius = 0.8, segments = 24): Vec[] | 
 
 - [ ] **Step 4: R3F-примитивы**
 
-`components/viz/three/Arrow3D.tsx`:
+`components/viz/vectors/three/Arrow3D.tsx`:
 
 ```tsx
 'use client'
@@ -5498,7 +5505,7 @@ export function Arrow3D({
 }
 ```
 
-`components/viz/three/Axes3D.tsx`:
+`components/viz/vectors/three/Axes3D.tsx`:
 
 ```tsx
 'use client'
@@ -5533,7 +5540,7 @@ export function Axes3D({ bound = BOUND }: { bound?: number }) {
 }
 ```
 
-`components/viz/three/DragHandle.tsx`:
+`components/viz/vectors/three/DragHandle.tsx`:
 
 ```tsx
 'use client'
@@ -5599,7 +5606,7 @@ export function DragHandle({ position, color, onDrag }: { position: Vec; color: 
 
 - [ ] **Step 5: Сцена векторов и её ленивая обёртка**
 
-`components/viz/VectorScene.tsx`:
+`components/viz/vectors/VectorScene.tsx`:
 
 ```tsx
 'use client'
@@ -5608,7 +5615,7 @@ import { Html, Line } from '@react-three/drei'
 import type { ReactNode } from 'react'
 import { add, sub, type Vec } from '@/lib/math'
 import { formatVec } from '@/lib/viz/vector-helpers'
-import { useStageInfo, type StageInfo } from './stage-context'
+import { useStageInfo, type StageInfo } from '@/components/viz/stage/stage-context'
 import { Arrow3D, pad3 } from './three/Arrow3D'
 import { Axes3D } from './three/Axes3D'
 import { DragHandle } from './three/DragHandle'
@@ -5669,7 +5676,7 @@ export function VectorScene({
 }
 ```
 
-`components/viz/LazyVectorScene.tsx`:
+`components/viz/vectors/LazyVectorScene.tsx`:
 
 ```tsx
 'use client'
@@ -5682,7 +5689,7 @@ export const LazyVectorScene = dynamic(() => import('./VectorScene').then((m) =>
 
 - [ ] **Step 6: Поля координат**
 
-`components/viz/VectorInputs.tsx`:
+`components/viz/vectors/VectorInputs.tsx`:
 
 ```tsx
 'use client'
@@ -5778,7 +5785,7 @@ export function VectorInputs({
 
 - [ ] **Step 7: MDX-компоненты векторов**
 
-`components/viz/VectorSpace3D.tsx`:
+`components/viz/vectors/VectorSpace3D.tsx`:
 
 ```tsx
 'use client'
@@ -5788,8 +5795,8 @@ import { norm, type Vec } from '@/lib/math'
 import { CONCEPTS } from '@/lib/theme/concepts'
 import { formatNum, formatVec } from '@/lib/viz/vector-helpers'
 import { LazyVectorScene } from './LazyVectorScene'
-import { Stage } from './Stage'
-import { StageFallbackNote } from './StageFallbackNote'
+import { Stage } from '@/components/viz/stage/Stage'
+import { StageFallbackNote } from '@/components/viz/stage/StageFallbackNote'
 import { VectorInputs } from './VectorInputs'
 
 export function VectorSpace3D({ initial = [2, 1, 2], label = 'v', caption }: { initial?: Vec; label?: string; caption?: ReactNode }) {
@@ -5829,19 +5836,19 @@ export function VectorSpace3D({ initial = [2, 1, 2], label = 'v', caption }: { i
 }
 ```
 
-`components/viz/VectorTask.tsx`:
+`components/viz/vectors/VectorTask.tsx`:
 
 ```tsx
 'use client'
 
 import { useState } from 'react'
-import { useGate } from '@/components/lesson/useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 import type { Vec } from '@/lib/math'
 import { CONCEPTS } from '@/lib/theme/concepts'
 import { formatNum, formatVec, vecEquals } from '@/lib/viz/vector-helpers'
 import { LazyVectorScene } from './LazyVectorScene'
-import { Stage } from './Stage'
-import { StageFallbackNote } from './StageFallbackNote'
+import { Stage } from '@/components/viz/stage/Stage'
+import { StageFallbackNote } from '@/components/viz/stage/StageFallbackNote'
 import { VectorInputs } from './VectorInputs'
 
 export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; target: Vec; start?: Vec }) {
@@ -5906,7 +5913,7 @@ export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; targ
 }
 ```
 
-`components/viz/VectorOps3D.tsx`:
+`components/viz/vectors/VectorOps3D.tsx`:
 
 ```tsx
 'use client'
@@ -5916,8 +5923,8 @@ import { add, scale, type Vec } from '@/lib/math'
 import { CONCEPTS } from '@/lib/theme/concepts'
 import { formatNum, formatVec } from '@/lib/viz/vector-helpers'
 import { LazyVectorScene } from './LazyVectorScene'
-import { Stage } from './Stage'
-import { StageFallbackNote } from './StageFallbackNote'
+import { Stage } from '@/components/viz/stage/Stage'
+import { StageFallbackNote } from '@/components/viz/stage/StageFallbackNote'
 import type { VectorSpec } from './VectorScene'
 import { VectorInputs } from './VectorInputs'
 
@@ -6012,7 +6019,7 @@ export function VectorOps3D({
 }
 ```
 
-`components/viz/DotProduct3D.tsx`:
+`components/viz/vectors/DotProduct3D.tsx`:
 
 ```tsx
 'use client'
@@ -6022,8 +6029,8 @@ import { angleDeg, dot, type Vec } from '@/lib/math'
 import { CONCEPTS } from '@/lib/theme/concepts'
 import { DOT_RELATION_TEXT, arcPoints, describeDot, dotBreakdown, formatNum } from '@/lib/viz/vector-helpers'
 import { LazyVectorScene } from './LazyVectorScene'
-import { Stage } from './Stage'
-import { StageFallbackNote } from './StageFallbackNote'
+import { Stage } from '@/components/viz/stage/Stage'
+import { StageFallbackNote } from '@/components/viz/stage/StageFallbackNote'
 import { VectorInputs } from './VectorInputs'
 
 const RELATION_COLOR = { same: '#a3e635', perpendicular: '#e2e8f0', opposite: '#fb7185' } as const
@@ -6078,10 +6085,10 @@ export function DotProduct3D({
 В `mdx-components.tsx` добавить импорты и ключи:
 
 ```tsx
-import { DotProduct3D } from '@/components/viz/DotProduct3D'
-import { VectorOps3D } from '@/components/viz/VectorOps3D'
-import { VectorSpace3D } from '@/components/viz/VectorSpace3D'
-import { VectorTask } from '@/components/viz/VectorTask'
+import { DotProduct3D } from '@/components/viz/vectors/DotProduct3D'
+import { VectorOps3D } from '@/components/viz/vectors/VectorOps3D'
+import { VectorSpace3D } from '@/components/viz/vectors/VectorSpace3D'
+import { VectorTask } from '@/components/viz/vectors/VectorTask'
 ```
 
 ```tsx
@@ -6725,7 +6732,7 @@ export function CodeEditor({
 'use client'
 
 import { useState } from 'react'
-import { useGate } from '@/components/lesson/useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 import { EXERCISES } from '@/content/attention/exercises'
 import type { ExecutionResult, ExerciseDef } from '@/lib/code/types'
 import { plural } from '@/lib/plural'
@@ -6901,9 +6908,9 @@ git commit -m "feat(code): TypeScript exercises executed in a Web Worker with te
 ### Task 16: Каркас сайта: шапка, навигация, главная, карта курса, глоссарий
 
 **Files:**
-- Create: `components/layout/TopBar.tsx`, `components/layout/ReviewBadge.tsx`, `components/layout/CourseNav.tsx`, `components/layout/StorageBanner.tsx`, `components/layout/ContinueButton.tsx`, `components/layout/CourseCard.tsx`, `components/viz/CourseMap.tsx`, `content/home/word-cloud.ts`, `components/viz/WordCloudScene.tsx`, `components/viz/WordCloud3D.tsx`, `app/courses/[course]/page.tsx`, `app/glossary/page.tsx`, `app/sitemap.ts`, `app/robots.ts`, `app/not-found.tsx`
+- Create: `components/layout/TopBar.tsx`, `components/layout/ReviewBadge.tsx`, `components/course/CourseNav.tsx`, `components/layout/StorageBanner.tsx`, `components/course/ContinueButton.tsx`, `components/course/CourseCard.tsx`, `components/course/CourseMap.tsx`, `content/home/word-cloud.ts`, `components/viz/words/WordCloudScene.tsx`, `components/viz/words/WordCloud3D.tsx`, `app/courses/[course]/page.tsx`, `app/glossary/page.tsx`, `app/sitemap.ts`, `app/robots.ts`, `app/not-found.tsx`
 - Modify: `app/layout.tsx`, `app/page.tsx`, `app/courses/[course]/[lesson]/page.tsx`, `mdx-components.tsx`
-- Test: `components/layout/layout.test.tsx`
+- Test: `components/course/course.test.tsx`
 
 **Interfaces:**
 - Consumes: реестр и типы курса (Task 3), `useProgress`, `useHydrated`, `isDue`, `todayISO`, `isLocalStorageAvailable` (Tasks 4–5), `Stage` (Task 12), `GLOSSARY` (Task 11), `plural` (Task 10), `SITE` (Task 1).
@@ -6911,7 +6918,7 @@ git commit -m "feat(code): TypeScript exercises executed in a Web Worker with te
 
 - [ ] **Step 1: Написать падающий тест**
 
-`components/layout/layout.test.tsx`:
+`components/course/course.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -6920,7 +6927,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { attentionCourse } from '@/content/attention/course'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
-import { CourseMap } from '@/components/viz/CourseMap'
+import { CourseMap } from '@/components/course/CourseMap'
 import { ContinueButton } from './ContinueButton'
 import { CourseNavList } from './CourseNav'
 
@@ -6971,7 +6978,7 @@ Expected: FAIL — модули не найдены.
 
 - [ ] **Step 3: Навигация и служебные элементы**
 
-`components/layout/CourseNav.tsx`:
+`components/course/CourseNav.tsx`:
 
 ```tsx
 'use client'
@@ -7131,7 +7138,7 @@ export function StorageBanner() {
 }
 ```
 
-`components/layout/ContinueButton.tsx`:
+`components/course/ContinueButton.tsx`:
 
 ```tsx
 'use client'
@@ -7156,7 +7163,7 @@ export function ContinueButton({ course }: { course: CourseMeta }) {
 }
 ```
 
-`components/layout/CourseCard.tsx`:
+`components/course/CourseCard.tsx`:
 
 ```tsx
 import Link from 'next/link'
@@ -7185,7 +7192,7 @@ export function CourseCard({ course }: { course: CourseMeta }) {
 
 - [ ] **Step 4: Карта курса (используется на странице курса и в уроке 0.2)**
 
-`components/viz/CourseMap.tsx`:
+`components/course/CourseMap.tsx`:
 
 ```tsx
 'use client'
@@ -7259,7 +7266,7 @@ export function CourseMap({ courseId = 'attention' }: { courseId?: string }) {
 }
 ```
 
-В `mdx-components.tsx` добавить `import { CourseMap } from '@/components/viz/CourseMap'` и ключ `CourseMap`.
+В `mdx-components.tsx` добавить `import { CourseMap } from '@/components/course/CourseMap'` и ключ `CourseMap`.
 
 - [ ] **Step 5: 3D-облако слов для главной**
 
@@ -7297,7 +7304,7 @@ export const WORDS: { word: string; group: WordGroup; pos: [number, number, numb
 ]
 ```
 
-`components/viz/WordCloudScene.tsx`:
+`components/viz/words/WordCloudScene.tsx`:
 
 ```tsx
 'use client'
@@ -7350,7 +7357,7 @@ export function WordCloudScene({ rotate }: { rotate: boolean }) {
 }
 ```
 
-`components/viz/WordCloud3D.tsx`:
+`components/viz/words/WordCloud3D.tsx`:
 
 ```tsx
 'use client'
@@ -7358,7 +7365,7 @@ export function WordCloudScene({ rotate }: { rotate: boolean }) {
 import dynamic from 'next/dynamic'
 import { useSyncExternalStore } from 'react'
 import { GROUPS } from '@/content/home/word-cloud'
-import { Stage } from './Stage'
+import { Stage } from '@/components/viz/stage/Stage'
 
 const LazyWordCloudScene = dynamic(() => import('./WordCloudScene').then((m) => m.WordCloudScene), { ssr: false })
 
@@ -7401,9 +7408,9 @@ export function WordCloud3D() {
 
 ```tsx
 import Link from 'next/link'
-import { ContinueButton } from '@/components/layout/ContinueButton'
-import { CourseCard } from '@/components/layout/CourseCard'
-import { WordCloud3D } from '@/components/viz/WordCloud3D'
+import { ContinueButton } from '@/components/course/ContinueButton'
+import { CourseCard } from '@/components/course/CourseCard'
+import { WordCloud3D } from '@/components/viz/words/WordCloud3D'
 import { getCourse } from '@/lib/course/registry'
 
 export default function Home() {
@@ -7450,8 +7457,8 @@ export default function Home() {
 ```tsx
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ContinueButton } from '@/components/layout/ContinueButton'
-import { CourseMap } from '@/components/viz/CourseMap'
+import { ContinueButton } from '@/components/course/ContinueButton'
+import { CourseMap } from '@/components/course/CourseMap'
 import { flatLessons, getCourse, listCourses, readyLessons } from '@/lib/course/registry'
 import { plural } from '@/lib/plural'
 
@@ -7610,7 +7617,7 @@ import { TopBar } from '@/components/layout/TopBar'
 `app/courses/[course]/[lesson]/page.tsx` — добавить импорт и навигацию:
 
 ```tsx
-import { CourseNav, MobileCourseNav } from '@/components/layout/CourseNav'
+import { CourseNav, MobileCourseNav } from '@/components/course/CourseNav'
 ```
 
 Внутри корневого `<div className="mx-auto flex max-w-7xl gap-10 …">` первым дочерним элементом вставить `<CourseNav course={course} currentSlug={lesson.slug} />`, а первым элементом внутри `<article>` (до `<header>`) — `<MobileCourseNav course={course} currentSlug={lesson.slug} />`.
@@ -7634,7 +7641,7 @@ git commit -m "feat(site): top bar, course navigation, home with 3D word cloud, 
 ### Task 17: Тесты целостности контента, игра «следующее слово», урок 0.1
 
 **Files:**
-- Create: `content/content.test.ts`, `components/lesson/NextWordGame.tsx`, `components/lesson/NextWordGame.test.tsx`
+- Create: `content/content.test.ts`, `components/lesson/gates/NextWordGame.tsx`, `components/lesson/gates/NextWordGame.test.tsx`
 - Modify: `content/attention/lessons/0-1-riddle.mdx` (полная замена черновика), `mdx-components.tsx`
 
 **Interfaces:**
@@ -7742,7 +7749,7 @@ Expected: FAIL — черновик урока 0.1 из Task 7 не содерж
 
 - [ ] **Step 3: Тест и реализация `NextWordGame`**
 
-`components/lesson/NextWordGame.test.tsx`:
+`components/lesson/gates/NextWordGame.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -7777,13 +7784,13 @@ describe('NextWordGame', () => {
 })
 ```
 
-`components/lesson/NextWordGame.tsx`:
+`components/lesson/gates/NextWordGame.tsx`:
 
 ```tsx
 'use client'
 
 import { useState } from 'react'
-import { useGate } from './useGate'
+import { useGate } from '@/components/lesson/engine/useGate'
 
 export interface WordRound {
   context: string
@@ -7847,7 +7854,7 @@ export function NextWordGame({ id, rounds }: { id: string; rounds: WordRound[] }
 }
 ```
 
-В `mdx-components.tsx` добавить `import { NextWordGame } from '@/components/lesson/NextWordGame'` и ключ `NextWordGame`.
+В `mdx-components.tsx` добавить `import { NextWordGame } from '@/components/lesson/gates/NextWordGame'` и ключ `NextWordGame`.
 
 - [ ] **Step 4: Урок 0.1 «Загадка «он»»** (полностью заменить `content/attention/lessons/0-1-riddle.mdx`)
 
