@@ -1,5 +1,6 @@
 import type { MDXComponents } from 'mdx/types'
 import { CodeExercise } from '@/components/code/CodeExercise'
+import { CourseMap } from '@/components/course/CourseMap'
 import { AttentionArcs } from '@/components/viz/attention/AttentionArcs'
 import { C } from '@/components/lesson/blocks/C'
 import { Faded } from '@/components/lesson/gates/Faded'
@@ -22,6 +23,7 @@ import { VectorTask } from '@/components/viz/vectors/VectorTask'
 const components: MDXComponents = {
   AttentionArcs,
   CodeExercise,
+  CourseMap,
   LessonStep,
   Check,
   Predict,

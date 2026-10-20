@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { CourseNav, MobileCourseNav } from '@/components/course/CourseNav'
 import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { LessonPager } from '@/components/lesson/engine/LessonPager'
 import { LessonStatusBadge } from '@/components/lesson/engine/LessonStatusBadge'
@@ -39,7 +40,9 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
 
   return (
     <div className="mx-auto flex max-w-7xl gap-10 px-4 py-10 lg:px-8">
+      <CourseNav course={course} currentSlug={lesson.slug} />
       <article className="min-w-0 flex-1">
+        <MobileCourseNav course={course} currentSlug={lesson.slug} />
         <header className="mx-auto mb-10 max-w-[680px] lg:mx-0">
           <p className="gate-label">
             Модуль {lesson.moduleNumber} · {lesson.moduleTitle} · урок {lesson.id} · {lesson.minutes} мин

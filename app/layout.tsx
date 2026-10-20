@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { IBM_Plex_Sans, JetBrains_Mono, Literata } from 'next/font/google'
 import 'katex/dist/katex.min.css'
 import './globals.css'
+import { StorageBanner } from '@/components/layout/StorageBanner'
+import { TopBar } from '@/components/layout/TopBar'
 import { ProgressHydrator } from '@/components/progress/ProgressHydrator'
 import { SITE } from '@/lib/site'
 
@@ -23,9 +25,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" className={`${literata.variable} ${plex.variable} ${jetbrains.variable}`}>
-      <body className="min-h-dvh antialiased">
+      <body className="flex min-h-dvh flex-col antialiased">
         <ProgressHydrator />
-        {children}
+        <StorageBanner />
+        <TopBar />
+        <div className="flex-1">{children}</div>
+        <footer className="border-t border-line py-8 text-center text-xs text-muted">
+          Учебник ИИ · по статье Vaswani et al., «Attention Is All You Need» (NeurIPS 2017)
+        </footer>
       </body>
     </html>
   )
