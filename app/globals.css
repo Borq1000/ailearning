@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f6f3ec;
+  --color-paper-deep: #eee8da;
+  --color-card: #fffdf7;
+  --color-ink: #22201c;
+  --color-ink-soft: #4a453c;
+  --color-muted: #6f6758;
+  --color-line: #e2dccf;
+  --color-space: #0a0e1f;
+  --color-space-glow: #1b2550;
+  --color-space-text: #dbe6ff;
+  --color-space-muted: #7c8db5;
+  --color-glow-cyan: #22d3ee;
+  --color-glow-orange: #fb923c;
+  --color-glow-violet: #a78bfa;
+  --color-glow-lime: #a3e635;
+  --color-ink-cyan: #0e7490;
+  --color-ink-orange: #c2410c;
+  --color-ink-violet: #6d28d9;
+  --color-ink-lime: #3f6212;
+  --color-success: #15803d;
+  --color-success-bg: #ecfdf3;
+  --color-error: #be123c;
+  --color-error-bg: #fff1f2;
+  --font-serif: var(--font-literata), Georgia, serif;
+  --font-sans: var(--font-plex), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    scroll-padding-top: 5rem;
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    background: #22d3ee55;
+  }
+}
+
+@layer components {
+  /* ── текст урока ─────────────────────────────── */
+  .prose-lesson {
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+  .prose-lesson h2 {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    line-height: 1.25;
+    margin: 2.5rem 0 1rem;
+  }
+  .prose-lesson h3 {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    margin: 2rem 0 0.75rem;
+  }
+  .prose-lesson p {
+    margin: 1rem 0;
+  }
+  .prose-lesson ul,
+  .prose-lesson ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+  .prose-lesson ul {
+    list-style: disc;
+  }
+  .prose-lesson ol {
+    list-style: decimal;
+  }
+  .prose-lesson li {
+    margin: 0.35rem 0;
+  }
+  .prose-lesson strong {
+    font-weight: 600;
+  }
+  .prose-lesson blockquote {
+    margin: 1.25rem 0;
+    padding: 0.75rem 1.25rem;
+    border-left: 3px solid var(--color-glow-cyan);
+    border-radius: 0 8px 8px 0;
+    background: var(--color-paper-deep);
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+  }
+  .prose-lesson code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--color-paper-deep);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+  }
+  .prose-lesson .katex-display {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* ── шаги урока ──────────────────────────────── */
+  .lesson-step + .lesson-step {
+    @apply mt-14 border-t border-dashed border-line pt-14;
+  }
+  .step-footer {
+    @apply mt-10 flex flex-wrap items-center gap-4;
+  }
+  .lock-pill {
+    @apply absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-ink px-4 py-2 text-sm whitespace-nowrap text-paper shadow-lg;
+  }
+
+  /* ── «ворота» и кнопки ───────────────────────── */
+  .gate-card {
+    @apply my-8 rounded-xl border-[1.5px] border-ink bg-card p-5 shadow-[4px_4px_0_0_var(--color-ink)];
+  }
+  .gate-card[data-passed='true'] {
+    @apply border-success shadow-[4px_4px_0_0_var(--color-success)];
+  }
+  .gate-label {
+    @apply text-[11px] font-semibold tracking-[0.14em] text-muted uppercase;
+  }
+  .gate-question {
+    @apply mt-1 font-serif text-lg leading-snug;
+  }
+  .option-btn {
+    @apply w-full rounded-lg border border-line bg-white px-4 py-2.5 text-left transition hover:border-ink disabled:cursor-default;
+  }
+  .option-btn[data-selected='true'] {
+    @apply border-ink bg-paper-deep;
+  }
+  .option-btn[data-right='true'] {
+    @apply border-success bg-success-bg;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-paper transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition hover:border-ink hover:text-ink;
+  }
+  .feedback-right {
+    @apply mt-3 rounded-lg bg-success-bg px-4 py-3 text-sm text-success;
+  }
+  .feedback-wrong {
+    @apply mt-3 rounded-lg bg-error-bg px-4 py-3 text-sm text-error;
+  }
+  .text-input {
+    @apply mt-3 w-40 rounded-lg border border-line bg-white px-3 py-2 font-mono focus:border-ink focus:outline-none;
+  }
+  .text-area {
+    @apply mt-3 w-full rounded-lg border border-line bg-white p-3 text-[15px] leading-relaxed focus:border-ink focus:outline-none;
+  }
+
+  /* ── блоки контента ──────────────────────────── */
+  .hook {
+    @apply my-6 rounded-xl bg-paper-deep px-6 py-5;
+  }
+  .summary-card {
+    @apply my-6 rounded-xl border border-line bg-card p-6;
+  }
+  .recall-card {
+    @apply rounded-lg border border-line bg-white p-4;
+  }
+  .worked {
+    @apply my-8 rounded-xl border border-line bg-card p-5;
+  }
+  .worked-step {
+    @apply border-l-2 border-glow-cyan pl-4;
+  }
+  .levels {
+    @apply my-6 rounded-xl border border-line bg-card;
+  }
+  .levels-tabs {
+    @apply flex gap-1 border-b border-line p-1.5;
+  }
+  .levels-tab {
+    @apply rounded-md px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink;
+  }
+  .levels-tab[aria-selected='true'] {
+    @apply bg-ink text-paper;
+  }
+  .levels-panel {
+    @apply px-5 py-1;
+  }
+  .term {
+    @apply cursor-help border-b border-dotted border-ink-soft;
+    font: inherit;
+    color: inherit;
+  }
+  .term-popover {
+    @apply absolute top-full left-0 z-20 mt-2 block w-72 rounded-lg border border-line bg-white p-4 text-left font-sans text-ink shadow-xl;
+    line-height: 1.5;
+  }
+  .concept {
+    @apply border-b-2 font-semibold;
+  }
+  .sidenote {
+    @apply my-4 block border-l-2 border-line pl-3 text-sm leading-relaxed text-muted italic;
+  }
+
+  /* ── обсерватория (3D/SVG-окна) ──────────────── */
+  .observatory-figure {
+    @apply my-8;
+  }
+  .observatory {
+    @apply relative overflow-hidden rounded-2xl text-space-text;
+    background: radial-gradient(ellipse at 60% 0%, var(--color-space-glow) 0%, var(--color-space) 70%);
+    box-shadow: 0 18px 40px -18px #0a0e1fcc;
+  }
+  .observatory-hint {
+    @apply pointer-events-none absolute top-2.5 right-3 z-10 font-mono text-[11px] text-space-muted;
+  }
+  .observatory-footer {
+    @apply border-t border-white/10 px-4 py-3 text-sm;
+  }
+  .stage-chip {
+    @apply rounded-full border border-white/20 px-3 py-1 font-mono text-xs text-space-text transition hover:border-glow-cyan;
+  }
+  .stage-chip[data-active='true'] {
+    @apply border-glow-cyan bg-glow-cyan/15 text-glow-cyan;
+  }
+  .stage-fallback {
+    @apply flex h-full flex-col justify-center gap-3 p-6 text-sm text-space-muted;
+  }
+  .stage-input {
+    @apply w-14 rounded border border-white/15 bg-white/5 px-1.5 py-0.5 text-center font-mono text-space-text focus:border-glow-cyan focus:outline-none;
+  }
+  .readout {
+    @apply mt-2 font-mono text-[13px] text-space-text;
+  }
+  .info-card {
+    @apply absolute top-9 right-3 z-20 w-64 rounded-lg border border-white/15 bg-[#0d1330f2] p-3 shadow-2xl;
+  }
+  .axis-label {
+    @apply pointer-events-none font-mono text-[11px] text-space-muted select-none;
+  }
+  .vector-label {
+    @apply pointer-events-none font-mono text-xs font-semibold whitespace-nowrap select-none;
+  }
+  .code-editor {
+    @apply overflow-hidden rounded-lg border border-white/10 text-[13px];
+  }
+  .code-editor .cm-editor {
+    max-height: 420px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .prose-lesson .sidenote {
+    float: right;
+    clear: right;
+    width: 200px;
+    margin: 0.25rem -230px 1rem 1.5rem;
+  }
+  .prose-lesson .breakout {
+    width: calc(100% + 220px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
