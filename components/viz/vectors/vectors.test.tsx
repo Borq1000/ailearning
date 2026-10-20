@@ -26,6 +26,18 @@ describe('VectorTask without WebGL', () => {
     expect(useProgress.getState().gates.vt.passed).toBe(true)
   })
 
+  it('shows the target once solved, e.g. after a reload', async () => {
+    useProgress.getState().recordAttempt('vt3', true)
+    render(<VectorTask id="vt3" target={[2, 1, 3]} start={[1, 1, 1]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    const x = screen.getByRole('textbox', { name: 'v, координата x' })
+    const z = screen.getByRole('textbox', { name: 'v, координата z' })
+    expect(x).toHaveValue('2')
+    expect(z).toHaveValue('3')
+    expect(x).toBeDisabled()
+    expect(z).toBeDisabled()
+  })
+
   it('explains what is off after a wrong try', async () => {
     render(<VectorTask id="vt2" target={[2, 1, 3]} start={[1, 1, 1]} />)
     await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))

@@ -15,7 +15,8 @@ export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; targ
   const [v, setV] = useState<Vec>(start)
   const [wrong, setWrong] = useState(false)
   const solved = gate.passed
-  const shown = gate.revealed ? target : v
+  // Решённое задание (в т.ч. после перезагрузки, когда локальный v снова равен start) показывает цель.
+  const shown = solved ? target : v
   const color = CONCEPTS.a.glow
 
   function update(next: Vec) {

@@ -2,7 +2,7 @@
 
 import { useCursor } from '@react-three/drei'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plane, Vector3 } from 'three'
 import type { Vec } from '@/lib/math'
 import { snapVec } from '@/lib/viz/vector-helpers'
@@ -34,12 +34,30 @@ export function DragHandle({ position, color, onDrag }: { position: Vec; color: 
     if (e.ray.intersectPlane(plane, hit)) onDrag(snapVec([hit.x, hit.y, hit.z]))
   }
 
-  function onPointerEnd(e: ThreeEvent<PointerEvent>) {
-    if (!dragging) return
-    ;(e.target as Element).releasePointerCapture(e.pointerId)
+  function endDrag() {
     if (controls) controls.enabled = true
     setDragging(false)
   }
+
+  function onPointerEnd(e: ThreeEvent<PointerEvent>) {
+    if (!dragging) return
+    ;(e.target as Element).releasePointerCapture(e.pointerId)
+    endDrag()
+  }
+
+  // Если захват указателя потерян без up/cancel или ручка исчезла посреди перетаскивания — орбита не должна остаться выключенной.
+  const controlsRef = useRef(controls)
+  const draggingRef = useRef(false)
+  useEffect(() => {
+    controlsRef.current = controls
+    draggingRef.current = dragging
+  })
+  useEffect(
+    () => () => {
+      if (draggingRef.current && controlsRef.current) controlsRef.current.enabled = true
+    },
+    [],
+  )
 
   const active = hover || dragging
   return (
@@ -49,6 +67,9 @@ export function DragHandle({ position, color, onDrag }: { position: Vec; color: 
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}
       onPointerCancel={onPointerEnd}
+      onLostPointerCapture={() => {
+        if (dragging) endDrag()
+      }}
       onPointerOver={() => setHover(true)}
       onPointerOut={() => setHover(false)}
     >
