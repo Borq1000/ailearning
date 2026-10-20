@@ -30,6 +30,23 @@ describe('Faded', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
     expect(useProgress.getState().gates.f1.passed).toBe(true)
   })
+
+  it('fills the blanks with the correct answers after "Показать ответы"', async () => {
+    render(<Faded id="f2" steps={steps} />)
+    await userEvent.type(screen.getByRole('textbox', { name: 'Пропуск в шаге 1' }), '1')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Пропуск в шаге 2' }), '9')
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответы' }))
+
+    const first = screen.getByRole('textbox', { name: 'Пропуск в шаге 1' })
+    const second = screen.getByRole('textbox', { name: 'Пропуск в шаге 2' })
+    expect(first).toHaveValue('6')
+    expect(second).toHaveValue('-4')
+    expect(first).toBeDisabled()
+    expect(second).toBeDisabled()
+    expect(useProgress.getState().gates.f2).toMatchObject({ passed: true, revealed: true })
+  })
 })
 
 describe('WorkedExample', () => {

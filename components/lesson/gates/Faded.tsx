@@ -43,7 +43,7 @@ export function Faded({ id, title, steps }: { id: string; title?: string; steps:
                   inputMode="decimal"
                   aria-label={`Пропуск в шаге ${i + 1}`}
                   className="text-input mt-0 w-24"
-                  value={solved && values[i] === '' ? String(step.answer) : values[i]}
+                  value={gate.revealed || (solved && values[i] === '') ? String(step.answer) : values[i]}
                   disabled={solved}
                   onChange={(e) => setValues((vs) => vs.map((v, j) => (j === i ? e.target.value : v)))}
                   onKeyDown={(e) => {
