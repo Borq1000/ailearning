@@ -1,0 +1,136 @@
+import type { CourseMeta, LessonKind, LessonMeta } from '@/lib/course/types'
+
+function lesson(id: string, slug: string, title: string, minutes: number, kind: LessonKind = 'lesson'): LessonMeta {
+  return { id, slug, title, minutes, kind, availability: 'soon' }
+}
+
+export const attentionCourse: CourseMeta = {
+  id: 'attention',
+  title: 'Внимание и трансформеры',
+  subtitle: 'От «что такое стрелка» до статьи «Attention Is All You Need» и ChatGPT',
+  modules: [
+    {
+      id: 'm0',
+      number: 0,
+      title: 'Загадка',
+      description: 'Почему понять «он» так трудно для машины — и как устроен наш путь.',
+      level: 'kid',
+      lessons: [lesson('0.1', '0-1-riddle', 'Загадка «он»', 10), lesson('0.2', '0-2-journey-map', 'Карта путешествия', 8)],
+    },
+    {
+      id: 'm1',
+      number: 1,
+      title: 'Математика как язык',
+      description: 'Векторы, скалярное произведение, матрицы и softmax — с нуля и на картинках.',
+      level: 'kid',
+      lessons: [
+        lesson('1.1', '1-1-vector', 'Вектор: стрелка и список чисел', 12),
+        lesson('1.2', '1-2-vector-ops', 'Сложение и масштаб', 12),
+        lesson('1.3', '1-3-dot-product', 'Скалярное произведение', 15),
+        lesson('1.4', '1-4-matrix', 'Матрица превращает пространство', 15),
+        lesson('1.5', '1-5-matmul', 'Умножение матриц', 15),
+        lesson('1.6', '1-6-softmax', 'Экспонента и softmax', 15),
+        lesson('1.P', '1-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+    {
+      id: 'm2',
+      number: 2,
+      title: 'Слова как точки',
+      description: 'Как слово превращается в точку в пространстве смыслов.',
+      level: 'student',
+      lessons: [
+        lesson('2.1', '2-1-tokens', 'Токены', 10),
+        lesson('2.2', '2-2-embeddings', 'Эмбеддинг: слово как точка', 12),
+        lesson('2.3', '2-3-similarity', 'Похожесть и арифметика смыслов', 12),
+        lesson('2.4', '2-4-context-problem', 'Проблема «ключа»', 10),
+        lesson('2.P', '2-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+    {
+      id: 'm3',
+      number: 3,
+      title: 'Внимание: идея',
+      description: 'Запрос, ключ и значение: как слово «смотрит» на другие слова.',
+      level: 'student',
+      lessons: [
+        lesson('3.1', '3-1-before-transformers', 'До трансформеров: испорченный телефон', 10),
+        lesson('3.2', '3-2-query-key-value', 'Запрос, ключ, значение', 12),
+        lesson('3.3', '3-3-attention-by-hand', 'Считаем внимание руками', 15),
+        lesson('3.4', '3-4-self-attention', 'Self-attention решает загадку', 15),
+        lesson('3.P', '3-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+    {
+      id: 'm4',
+      number: 4,
+      title: 'Внимание: формула',
+      description: 'softmax(QKᵀ/√dₖ)·V — разбираем каждую букву и пишем код.',
+      level: 'advanced',
+      lessons: [
+        lesson('4.1', '4-1-qkv-matrices', 'Откуда берутся Q, K, V', 12),
+        lesson('4.2', '4-2-qk-heatmap', 'QKᵀ — тепловая карта', 12),
+        lesson('4.3', '4-3-scaling', 'Зачем делить на √dₖ', 10),
+        lesson('4.4', '4-4-full-formula', 'Формула целиком', 15),
+        lesson('4.5', '4-5-masking', 'Маска: не подглядывать в будущее', 10),
+        lesson('4.P', '4-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+    {
+      id: 'm5',
+      number: 5,
+      title: 'Много голов и порядок слов',
+      description: 'Несколько «прожекторов» внимания и как модель узнаёт порядок слов.',
+      level: 'advanced',
+      lessons: [
+        lesson('5.1', '5-1-multi-head', 'Несколько прожекторов', 12),
+        lesson('5.2', '5-2-concat', 'Concat, Wᴼ и размеры из статьи', 12),
+        lesson('5.3', '5-3-word-order', 'Порядок слов', 10),
+        lesson('5.4', '5-4-positional-encoding', 'Позиционное кодирование', 15),
+        lesson('5.P', '5-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+    {
+      id: 'm6',
+      number: 6,
+      title: 'Собираем трансформер',
+      description: 'Feed-forward, residual, LayerNorm, энкодер и декодер — собираем целиком.',
+      level: 'advanced',
+      lessons: [
+        lesson('6.1', '6-1-feed-forward', 'Feed-forward: подумать над словом', 12),
+        lesson('6.2', '6-2-residual-layernorm', 'Residual и LayerNorm', 12),
+        lesson('6.3', '6-3-encoder-block', 'Блок энкодера в 3D', 15),
+        lesson('6.4', '6-4-decoder-cross-attention', 'Декодер и cross-attention', 15),
+        lesson('6.5', '6-5-stack', 'Стопка из шести слоёв', 12),
+        lesson('6.6', '6-6-project', 'Проект: свой мини-трансформер', 20),
+        lesson('6.P', '6-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+    {
+      id: 'm7',
+      number: 7,
+      title: 'Читаем статью',
+      description: 'Обучение на интуиции, результаты и статья абзац за абзацем.',
+      level: 'paper',
+      lessons: [
+        lesson('7.1', '7-1-training-intuition', 'Обучение на интуиции', 15),
+        lesson('7.2', '7-2-why-revolution', 'Почему это революция', 12),
+        lesson('7.3', '7-3-paper-walkthrough', 'Статья абзац за абзацем', 20),
+        lesson('7.P', '7-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+    {
+      id: 'm8',
+      number: 8,
+      title: 'Мостик к GPT',
+      description: 'Как из трансформера получился ChatGPT: только декодер и генерация.',
+      level: 'frontier',
+      lessons: [
+        lesson('8.1', '8-1-decoder-only', 'Только декодер', 12),
+        lesson('8.2', '8-2-generation', 'Генерация: температура и top-k', 12),
+        lesson('8.3', '8-3-whats-next', 'Что дальше', 10),
+        lesson('8.P', '8-p-practice', 'Смешанная практика', 12, 'practice'),
+      ],
+    },
+  ],
+}
