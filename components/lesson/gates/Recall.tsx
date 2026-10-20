@@ -23,6 +23,7 @@ export function Recall({ id }: { id: string }) {
     if (!hydrated || picked !== null) return
     const { cards: states, customCards, gates } = useProgress.getState()
     if (gates[id]?.passed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- состояние зависит от localStorage и вычисляется только после гидратации
       setAlreadyDone(true)
       setPicked([])
       return

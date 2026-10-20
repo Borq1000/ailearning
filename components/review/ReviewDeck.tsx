@@ -34,6 +34,7 @@ export function ReviewDeck({ cards }: { cards: Card[] }) {
   useEffect(() => {
     if (!hydrated || session !== null) return
     const current = useProgress.getState().cards
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- состояние зависит от localStorage и вычисляется только после гидратации
     setSession([...byId.keys()].filter((cardId) => current[cardId] && isDue(current[cardId], todayISO())))
   }, [hydrated, session, byId])
 

@@ -24,6 +24,7 @@ export function DragHandle({ position, color, onDrag }: { position: Vec; color: 
     const normal = new Vector3()
     camera.getWorldDirection(normal)
     plane.setFromNormalAndCoplanarPoint(normal, new Vector3(...pad3(position)))
+    // eslint-disable-next-line react-hooks/immutability -- OrbitControls: штатный приём R3F, на время перетаскивания отключаем вращение камеры
     if (controls) controls.enabled = false
     setDragging(true)
   }
@@ -35,6 +36,7 @@ export function DragHandle({ position, color, onDrag }: { position: Vec; color: 
   }
 
   function endDrag() {
+    // eslint-disable-next-line react-hooks/immutability -- OrbitControls: штатный приём R3F, на время перетаскивания отключаем вращение камеры
     if (controls) controls.enabled = true
     setDragging(false)
   }

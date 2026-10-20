@@ -46,6 +46,7 @@ export function Stage({
   const infoApi = useMemo(() => ({ show: setInfo, hide: () => setInfo(null) }), [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- состояние зависит от браузера (WebGL) и вычисляется только после гидратации
     setWebgl(detectWebGL())
   }, [])
 
