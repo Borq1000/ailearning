@@ -23,6 +23,12 @@ describe('approxEqual', () => {
     expect(approxEqual(1, [1], 1e-6)).toBe(false)
   })
 
+  it('scales the tolerance for large numbers but stays absolute near zero', () => {
+    expect(approxEqual(10000.005, 10000, 1e-6)).toBe(true)
+    expect(approxEqual(1e-5, 0, 1e-6)).toBe(false)
+    expect(approxEqual(1.0000005, 1, 1e-6)).toBe(true)
+  })
+
   it('never throws on whatever student code returns', () => {
     for (const bad of [undefined, null, '32', Number.NaN, {}, () => 32, Number.POSITIVE_INFINITY]) {
       expect(approxEqual(bad, 32, 1e-6)).toBe(false)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useGate } from '@/components/lesson/engine/useGate'
 import { EXERCISES } from '@/content/attention/exercises'
 import type { ExecutionResult, ExerciseDef } from '@/lib/code/types'
@@ -66,10 +66,22 @@ function CodeExerciseView({ exercise }: { exercise: ExerciseDef }) {
   const [hints, setHints] = useState(0)
   const [showSolution, setShowSolution] = useState(false)
 
+  // ref, а не state: два быстрых вызова (кнопка + Ctrl+Enter) приходят до перерисовки
+  const busy = useRef(false)
+
   async function runTests() {
+    if (busy.current) return
+    busy.current = true
     setRunning(true)
-    const next = await run(source, exercise.id)
-    setRunning(false)
+    let next: ExecutionResult
+    try {
+      next = await run(source, exercise.id)
+    } catch {
+      next = { status: 'runtime-error', message: 'Не удалось запустить проверку кода.' }
+    } finally {
+      busy.current = false
+      setRunning(false)
+    }
     setResult(next)
     if (next.status === 'ok' && next.results.every((t) => t.pass)) gate.pass()
     else setFailedRuns((n) => n + 1)
