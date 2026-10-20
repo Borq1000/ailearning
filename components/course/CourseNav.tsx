@@ -9,7 +9,7 @@ function StatusDot({ status }: { status?: string }) {
   const label = status === 'completed' ? 'пройден' : status === 'in-progress' ? 'в процессе' : 'не начат'
   const style =
     status === 'completed' ? 'bg-success' : status === 'in-progress' ? 'bg-glow-cyan' : 'border border-muted'
-  return <span aria-label={label} title={label} className={`inline-block h-2 w-2 shrink-0 rounded-full ${style}`} />
+  return <span role="img" aria-label={label} title={label} className={`inline-block h-2 w-2 shrink-0 rounded-full ${style}`} />
 }
 
 export function CourseNavList({ course, currentSlug }: { course: CourseMeta; currentSlug?: string }) {

@@ -39,7 +39,7 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
   const Content = mod.default
 
   return (
-    <div className="mx-auto flex max-w-7xl gap-10 px-4 py-10 lg:px-8">
+    <main className="mx-auto flex max-w-7xl gap-10 px-4 py-10 lg:px-8">
       <CourseNav course={course} currentSlug={lesson.slug} />
       <article className="min-w-0 flex-1">
         <MobileCourseNav course={course} currentSlug={lesson.slug} />
@@ -69,6 +69,6 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
           <LessonPager courseId={course.id} prev={prev} next={next} />
         </div>
       </article>
-    </div>
+    </main>
   )
 }

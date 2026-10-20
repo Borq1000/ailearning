@@ -24,6 +24,7 @@ describe('CourseNavList', () => {
     render(<CourseNavList course={attentionCourse} currentSlug="0-1-riddle" />)
     expect(screen.getByRole('link', { name: /0\.1 Загадка/ })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByLabelText('пройден')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'пройден' })).toBeInTheDocument()
     expect(screen.getAllByText('скоро').length).toBeGreaterThan(0)
   })
 })
@@ -36,6 +37,15 @@ describe('ContinueButton', () => {
       'href',
       '/courses/attention/0-1-riddle',
     )
+  })
+})
+
+describe('ContinueButton with stale progress', () => {
+  it('still invites to start when progress holds only unknown lesson ids', async () => {
+    useProgress.setState({ lessons: { '9.9': { status: 'completed', unlockedStep: 0 } } })
+    await useProgress.persist.rehydrate()
+    render(<ContinueButton course={attentionCourse} />)
+    expect(screen.getByRole('link', { name: /Начать с первого урока/ })).toBeInTheDocument()
   })
 })
 

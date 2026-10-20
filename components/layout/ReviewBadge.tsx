@@ -9,8 +9,9 @@ export function ReviewBadge() {
   const due = useProgress((s) => Object.values(s.cards).filter((c) => isDue(c, todayISO())).length)
   if (!hydrated || due === 0) return null
   return (
-    <span aria-label={`карточек к повторению: ${due}`} className="rounded-full bg-glow-orange px-1.5 text-[11px] font-semibold text-ink">
+    <span className="rounded-full bg-glow-orange px-1.5 text-[11px] font-semibold text-ink">
       {due}
+      <span className="sr-only"> карточек к повторению</span>
     </span>
   )
 }

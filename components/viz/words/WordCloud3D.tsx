@@ -28,7 +28,7 @@ export function WordCloud3D() {
   return (
     <Stage
       height={420}
-      frameloop="always"
+      frameloop={reducedMotion ? 'demand' : 'always'}
       camera={[6, 3, 7]}
       caption="Каждое слово — точка в пространстве смыслов. Похожие слова живут рядом. Подробно — в модуле 2."
       fallback={<p className="m-0">Здесь вращается облако слов: животные, предметы, чувства и действия собираются в свои «районы».</p>}
