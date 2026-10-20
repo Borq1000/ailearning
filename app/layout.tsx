@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { IBM_Plex_Sans, JetBrains_Mono, Literata } from 'next/font/google'
 import 'katex/dist/katex.min.css'
 import './globals.css'
+import { ProgressHydrator } from '@/components/progress/ProgressHydrator'
 import { SITE } from '@/lib/site'
 
 const literata = Literata({ subsets: ['latin', 'cyrillic'], variable: '--font-literata', display: 'swap' })
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" className={`${literata.variable} ${plex.variable} ${jetbrains.variable}`}>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        <ProgressHydrator />
+        {children}
+      </body>
     </html>
   )
 }

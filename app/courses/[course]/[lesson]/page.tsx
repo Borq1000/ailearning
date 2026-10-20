@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { LessonPager } from '@/components/lesson/engine/LessonPager'
+import { LessonStatusBadge } from '@/components/lesson/engine/LessonStatusBadge'
 import { loadLessonModule } from '@/lib/course/lesson-module'
-import { findLesson, getCourse, listCourses, neighbors, readyLessons } from '@/lib/course/registry'
+import { findLesson, getCourse, lessonsBefore, listCourses, neighbors, readyLessons } from '@/lib/course/registry'
 
 type Params = { course: string; lesson: string }
 
@@ -32,6 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 export default async function LessonPage({ params }: { params: Promise<Params> }) {
   const { course, lesson, mod } = await resolveLesson(params)
   const { prev, next } = neighbors(course, lesson.slug)
+  const previous = await Promise.all(lessonsBefore(course, lesson.slug).map((l) => loadLessonModule(course.id, l.slug)))
   const Content = mod.default
 
   return (
@@ -48,10 +51,17 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
               <li key={o}>✦ {o}</li>
             ))}
           </ul>
+          <LessonStatusBadge lessonId={lesson.id} />
         </header>
-        <div className="prose-lesson mx-auto max-w-[680px] lg:mx-0">
-          <Content />
-        </div>
+        <LessonProvider
+          lessonId={lesson.id}
+          lessonCardIds={mod.cards.map((c) => c.id)}
+          recallCards={previous.flatMap((m) => m.cards)}
+        >
+          <div className="prose-lesson mx-auto max-w-[680px] lg:mx-0">
+            <Content />
+          </div>
+        </LessonProvider>
         <div className="mx-auto max-w-[680px] lg:mx-0">
           <LessonPager courseId={course.id} prev={prev} next={next} />
         </div>
