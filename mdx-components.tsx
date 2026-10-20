@@ -1,4 +1,5 @@
 import type { MDXComponents } from 'mdx/types'
+import { AttentionArcs } from '@/components/viz/attention/AttentionArcs'
 import { C } from '@/components/lesson/blocks/C'
 import { Faded } from '@/components/lesson/gates/Faded'
 import { Hook } from '@/components/lesson/blocks/Hook'
@@ -14,6 +15,7 @@ import { Predict } from '@/components/lesson/gates/Predict'
 import { Recall } from '@/components/lesson/gates/Recall'
 
 const components: MDXComponents = {
+  AttentionArcs,
   LessonStep,
   Check,
   Predict,
