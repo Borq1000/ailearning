@@ -17,7 +17,7 @@ export const attentionCourse: CourseMeta = {
       level: 'kid',
       lessons: [
         { ...lesson('0.1', '0-1-riddle', 'Загадка «он»', 10), availability: 'ready' },
-        lesson('0.2', '0-2-journey-map', 'Карта путешествия', 8),
+        { ...lesson('0.2', '0-2-journey-map', 'Карта путешествия', 8), availability: 'ready' },
       ],
     },
     {
