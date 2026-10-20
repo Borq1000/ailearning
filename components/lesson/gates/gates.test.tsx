@@ -1,0 +1,108 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { emptyProgress } from '@/lib/progress/migrate'
+import { useProgress } from '@/lib/progress/store'
+import { Check } from './Check'
+import { ExplainBack } from './ExplainBack'
+import { Predict } from './Predict'
+
+beforeEach(() => {
+  useProgress.setState(emptyProgress())
+})
+
+const gates = () => useProgress.getState().gates
+
+describe('Check with options', () => {
+  const props = {
+    id: 'q1',
+    question: 'Сколько будет 2 + 2?',
+    options: ['3', '4', '5'],
+    answer: 1,
+    explain: 'Потому что 4.',
+    feedback: ['Чуть больше.', '', 'Чуть меньше.'],
+  }
+
+  it('passes on the right answer and shows the explanation', async () => {
+    render(<Check {...props} />)
+    await userEvent.click(screen.getByRole('radio', { name: '4' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    expect(screen.getByText('✓ Верно!')).toBeInTheDocument()
+    expect(screen.getByText('Потому что 4.')).toBeInTheDocument()
+    expect(gates().q1.passed).toBe(true)
+  })
+
+  it('gives option-specific feedback and offers the answer only after two tries', async () => {
+    render(<Check {...props} />)
+    await userEvent.click(screen.getByRole('radio', { name: '3' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    expect(screen.getByText('Чуть больше.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Показать ответ' })).toBeNull()
+
+    await userEvent.click(screen.getByRole('radio', { name: '5' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
+
+    expect(gates().q1).toMatchObject({ passed: true, revealed: true })
+    expect(useProgress.getState().customCards['check:q1']).toMatchObject({ kind: 'choice', correct: 1 })
+    expect(screen.getByText(/Ответ: 4/)).toBeInTheDocument()
+  })
+})
+
+describe('Check with a number', () => {
+  it('accepts a decimal comma', async () => {
+    render(<Check id="q2" question="Половина от единицы?" answer={0.5} />)
+    await userEvent.type(screen.getByRole('textbox', { name: 'Твой ответ' }), '0,5')
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    expect(gates().q2.passed).toBe(true)
+  })
+
+  it('asks for a number instead of counting a non-numeric attempt', async () => {
+    render(<Check id="q3" question="Сколько?" answer={2} />)
+    await userEvent.type(screen.getByRole('textbox', { name: 'Твой ответ' }), 'два')
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    expect(screen.getByText('Введи число, например 0.5 или −2')).toBeInTheDocument()
+    expect(gates().q3).toBeUndefined()
+  })
+})
+
+describe('Predict', () => {
+  const question = 'Кто здесь «он»?'
+
+  it('accepts any prediction, then reveals the explanation', async () => {
+    render(
+      <Predict id="p1" question={question} options={['кот', 'забор']} answer={1}>
+        <p>Объяснение</p>
+      </Predict>,
+    )
+    expect(screen.queryByText('Объяснение')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Зафиксировать прогноз' })).toBeDisabled()
+    await userEvent.click(screen.getByRole('radio', { name: 'кот' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Зафиксировать прогноз' }))
+    expect(screen.getByText('Объяснение')).toBeInTheDocument()
+    expect(screen.getByText(/На самом деле — «забор»/)).toBeInTheDocument()
+    expect(gates().p1).toMatchObject({ passed: true, choice: 0 })
+  })
+
+  it('celebrates a correct prediction', async () => {
+    render(<Predict id="p2" question={question} options={['кот', 'забор']} answer={1} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'забор' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Зафиксировать прогноз' }))
+    expect(screen.getByText('Так и есть!')).toBeInTheDocument()
+  })
+})
+
+describe('ExplainBack', () => {
+  it('needs a real attempt before the reference, then passes on «Готово»', async () => {
+    render(<ExplainBack id="e1" prompt="Объясни" reference={<span>Эталон</span>} points={['пункт А']} />)
+    const compare = screen.getByRole('button', { name: 'Сравнить с эталоном' })
+    expect(compare).toBeDisabled()
+    await userEvent.type(screen.getByRole('textbox', { name: 'Твоё объяснение' }), 'Короткий, но настоящий ответ')
+    expect(compare).toBeEnabled()
+    await userEvent.click(compare)
+    expect(screen.getByText('Эталон')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Готово, я сравнил' }))
+    expect(gates().e1.passed).toBe(true)
+    expect(useProgress.getState().explanations.e1).toBe('Короткий, но настоящий ответ')
+  })
+})
