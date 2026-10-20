@@ -27,9 +27,9 @@ export const attentionCourse: CourseMeta = {
       description: 'Векторы, скалярное произведение, матрицы и softmax — с нуля и на картинках.',
       level: 'kid',
       lessons: [
-        lesson('1.1', '1-1-vector', 'Вектор: стрелка и список чисел', 12),
-        lesson('1.2', '1-2-vector-ops', 'Сложение и масштаб', 12),
-        lesson('1.3', '1-3-dot-product', 'Скалярное произведение', 15),
+        { ...lesson('1.1', '1-1-vector', 'Вектор: стрелка и список чисел', 12), availability: 'ready' },
+        { ...lesson('1.2', '1-2-vector-ops', 'Сложение и масштаб', 12), availability: 'ready' },
+        { ...lesson('1.3', '1-3-dot-product', 'Скалярное произведение', 15), availability: 'ready' },
         lesson('1.4', '1-4-matrix', 'Матрица превращает пространство', 15),
         lesson('1.5', '1-5-matmul', 'Умножение матриц', 15),
         lesson('1.6', '1-6-softmax', 'Экспонента и softmax', 15),
