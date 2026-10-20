@@ -20,8 +20,13 @@ describe('NextWordGame', () => {
         ]}
       />,
     )
-    await userEvent.click(screen.getByRole('button', { name: 'снег' }))
-    expect(screen.getByText(/чаще говорят «чай»/)).toBeInTheDocument()
+    const wrong = screen.getByRole('button', { name: 'снег' })
+    await userEvent.click(wrong)
+    expect(wrong).toHaveFocus()
+    expect(wrong).toHaveAttribute('aria-disabled', 'true')
+    const verdict = screen.getByText(/Вероятнее всего — «чай»/)
+    expect(verdict).toBeInTheDocument()
+    expect(screen.getAllByRole('status').some((el) => el.contains(verdict))).toBe(true)
     expect(useProgress.getState().gates.nw?.passed).toBeFalsy()
     await userEvent.click(screen.getByRole('button', { name: 'книгу' }))
     expect(screen.getByText(/✓ Подходит всё/)).toBeInTheDocument()

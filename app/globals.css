@@ -127,7 +127,7 @@
     @apply mt-1 font-serif text-lg leading-snug;
   }
   .option-btn {
-    @apply w-full rounded-lg border border-line bg-white px-4 py-2.5 text-left transition hover:border-ink disabled:cursor-default;
+    @apply w-full rounded-lg border border-line bg-white px-4 py-2.5 text-left transition hover:border-ink disabled:cursor-default aria-disabled:cursor-default;
   }
   .option-btn[data-selected='true'] {
     @apply border-ink bg-paper-deep;

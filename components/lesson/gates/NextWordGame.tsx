@@ -41,7 +41,7 @@ export function NextWordGame({ id, rounds }: { id: string; rounds: WordRound[] }
                     key={option}
                     type="button"
                     className="option-btn w-auto"
-                    disabled={picked !== null}
+                    aria-disabled={picked !== null}
                     data-selected={picked === i}
                     data-right={picked !== null && round.answers.includes(i)}
                     onClick={() => pick(r, i)}
@@ -50,12 +50,14 @@ export function NextWordGame({ id, rounds }: { id: string; rounds: WordRound[] }
                   </button>
                 ))}
               </div>
-              {picked !== null && (
-                <p className={`mt-2 mb-0 text-sm ${good ? 'text-success' : 'text-ink-soft'}`}>
-                  {good ? '✓ ' : `Можно и так, но чаще говорят «${round.options[round.answers[0]]}». `}
-                  {round.note}
-                </p>
-              )}
+              <p role="status" className={`mt-2 mb-0 text-sm ${good ? 'text-success' : 'text-ink-soft'}`}>
+                {picked !== null && (
+                  <>
+                    {good ? '✓ ' : `Вероятнее всего — «${round.options[round.answers[0]]}». `}
+                    {round.note}
+                  </>
+                )}
+              </p>
             </li>
           )
         })}

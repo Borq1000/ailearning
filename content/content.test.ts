@@ -76,17 +76,23 @@ describe('course content integrity', () => {
   }
 
   it('uses unique gate ids and card ids across the course', async () => {
-    const gateIds: string[] = []
+    // Progress is keyed by the bare id (useProgress.gates[id]); CodeExercise stores `code:${id}`.
+    const stored: string[] = []
+    const labelled: string[] = []
     const cardIds: string[] = []
     for (const lesson of ready) {
       const src = sourceOf(lesson.slug)
       for (const tag of GATE_TAGS) {
-        for (const [, id] of src.matchAll(new RegExp(`<${tag}\\b[^>]*?\\bid="([^"]+)"`, 'g'))) gateIds.push(`${tag}:${id}`)
+        for (const [, id] of src.matchAll(new RegExp(`<${tag}\\b[^>]*?\\bid="([^"]+)"`, 'g'))) {
+          stored.push(tag === 'CodeExercise' ? `code:${id}` : id)
+          labelled.push(`${tag}:${id}`)
+        }
       }
       const mod = await compile(src)
       cardIds.push(...mod.cards.map((c) => c.id))
     }
-    expect(new Set(gateIds).size).toBe(gateIds.length)
+    const duplicates = labelled.filter((_, i) => stored.indexOf(stored[i]) !== i || stored.lastIndexOf(stored[i]) !== i)
+    expect(duplicates, `gates sharing one progress key: ${duplicates.join(', ')}`).toEqual([])
     expect(new Set(cardIds).size).toBe(cardIds.length)
   })
 })
