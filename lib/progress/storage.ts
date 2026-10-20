@@ -34,8 +34,12 @@ export function createSafeStorage(): StateStorage {
         JSON.parse(raw)
         return raw
       } catch {
-        window.localStorage.setItem(BACKUP_KEY, raw)
-        window.localStorage.removeItem(key)
+        try {
+          window.localStorage.setItem(BACKUP_KEY, raw)
+          window.localStorage.removeItem(key)
+        } catch {
+          // не удалось сохранить копию — всё равно сообщаем, что данных нет
+        }
         return null
       }
     },
@@ -46,6 +50,12 @@ export function createSafeStorage(): StateStorage {
         // квота переполнена: состояние остаётся в памяти до конца сессии
       }
     },
-    removeItem: (key) => window.localStorage.removeItem(key),
+    removeItem: (key) => {
+      try {
+        window.localStorage.removeItem(key)
+      } catch {
+        // хранилище недоступно — удалять нечего
+      }
+    },
   }
 }

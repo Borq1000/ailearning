@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import type { Card } from '@/lib/course/types'
 import { CURRENT_VERSION, emptyProgress, migrateProgress, normalizeProgress } from './migrate'
 import { addDays, newCard, nextReview } from './scheduler'
@@ -27,6 +27,15 @@ const EMPTY_GATE: GateProgress = { passed: false, attempts: 0, revealed: false }
 function pickData(s: ProgressData): ProgressData {
   const { version, lessons, gates, code, explanations, cards, customCards } = s
   return { version, lessons, gates, code, explanations, cards, customCards }
+}
+
+// zustand persist пишет в хранилище при каждом set — даже до загрузки сохранённого прогресса.
+// Пока прогресс не загружен, запись пропускаем, чтобы пустое состояние не затёрло сохранённое.
+let loaded = false
+
+function createGuardedStorage(): StateStorage {
+  const storage = createSafeStorage()
+  return { ...storage, setItem: (key, value) => (loaded ? storage.setItem(key, value) : undefined) }
 }
 
 export const useProgress = create<ProgressStore>()(
@@ -109,11 +118,14 @@ export const useProgress = create<ProgressStore>()(
     {
       name: STORAGE_KEY,
       version: CURRENT_VERSION,
-      storage: createJSONStorage(() => createSafeStorage()),
+      storage: createJSONStorage(createGuardedStorage),
       skipHydration: true,
+      onRehydrateStorage: () => () => {
+        loaded = true
+      },
       partialize: (s) => pickData(s),
       migrate: (persisted, version) => migrateProgress(persisted, version) as unknown as ProgressStore,
-      merge: (persisted, current) => ({ ...current, ...normalizeProgress(persisted) }),
+      merge: (persisted, current) => (persisted === undefined ? current : { ...current, ...normalizeProgress(persisted) }),
     },
   ),
 )
