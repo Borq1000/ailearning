@@ -5,6 +5,7 @@ import './globals.css'
 import { StorageBanner } from '@/components/layout/StorageBanner'
 import { TopBar } from '@/components/layout/TopBar'
 import { ProgressHydrator } from '@/components/progress/ProgressHydrator'
+import { readyCardIds } from '@/lib/course/card-ids'
 import { SITE } from '@/lib/site'
 
 const literata = Literata({ subsets: ['latin', 'cyrillic'], variable: '--font-literata', display: 'swap' })
@@ -23,12 +24,14 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Значок повторения считает только карточки, которые есть в колоде (id из старых версий курса не в счёт).
+  const knownCardIds = readyCardIds()
   return (
     <html lang="ru" className={`${literata.variable} ${plex.variable} ${jetbrains.variable}`}>
       <body className="flex min-h-dvh flex-col antialiased">
         <ProgressHydrator />
         <StorageBanner />
-        <TopBar />
+        <TopBar knownCardIds={knownCardIds} />
         <div className="flex-1">{children}</div>
         <footer className="border-t border-line py-8 text-center text-xs text-muted">
           Учебник ИИ · по статье Vaswani et al., «Attention Is All You Need» (NeurIPS 2017)

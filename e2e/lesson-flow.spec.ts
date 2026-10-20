@@ -26,6 +26,28 @@ test('lesson 0.1 is walked step by step and remembers progress after reload', as
   expect(errors).toEqual([])
 })
 
+test('two open tabs of a lesson do not overwrite each other’s progress', async ({ context }) => {
+  const url = '/courses/attention/0-1-riddle'
+  const b = await context.newPage()
+  await b.goto(url)
+  // вкладка B загрузила (пустой) прогресс: второй шаг стал тизером
+  await expect(b.locator('[data-step="1"]')).toHaveAttribute('data-state', 'teaser')
+
+  const a = await context.newPage()
+  await a.goto(url)
+  const step0 = a.locator('[data-step="0"]')
+  await step0.getByRole('radio', { name: 'забор' }).click()
+  await step0.getByRole('button', { name: 'Зафиксировать прогноз' }).click()
+  await step0.getByRole('button', { name: 'Дальше →' }).click()
+  await expect(a.locator('[data-step="1"]')).toHaveAttribute('data-state', 'open')
+
+  // B видит прогресс A без перезагрузки…
+  await expect(b.locator('[data-step="1"]')).toHaveAttribute('data-state', 'open')
+  // …и не затирает его своим старым состоянием
+  await b.reload()
+  await expect(b.locator('[data-step="1"]')).toHaveAttribute('data-state', 'open')
+})
+
 for (const slug of READY) {
   test(`${slug} renders without console errors`, async ({ page }) => {
     const errors: string[] = []

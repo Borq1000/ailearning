@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { CardView } from '@/components/review/CardView'
 import type { Card } from '@/lib/course/types'
+import { downloadText } from '@/lib/download'
 import { plural } from '@/lib/plural'
 import { isDue, todayISO } from '@/lib/progress/scheduler'
 import { useProgress } from '@/lib/progress/store'
@@ -45,12 +46,7 @@ export function ReviewDeck({ cards }: { cards: Card[] }) {
     .sort()[0]
 
   function download() {
-    const url = URL.createObjectURL(new Blob([exportProgress()], { type: 'application/json' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `ailearning-progress-${today}.json`
-    link.click()
-    URL.revokeObjectURL(url)
+    downloadText(`ailearning-progress-${today}.json`, exportProgress())
   }
 
   async function upload(e: ChangeEvent<HTMLInputElement>) {
@@ -96,7 +92,7 @@ export function ReviewDeck({ cards }: { cards: Card[] }) {
         <div className="summary-card">
           <p className="m-0 font-serif text-xl">
             {session.length > 0
-              ? `На сегодня всё! 🎉 Повторено ${session.length} ${plural(session.length, ['карточка', 'карточки', 'карточек'])}.`
+              ? `На сегодня всё! 🎉 Повторено: ${session.length} ${plural(session.length, ['карточка', 'карточки', 'карточек'])}.`
               : 'На сегодня всё! 🎉'}
           </p>
           <p className="mt-2 mb-0 text-ink-soft">

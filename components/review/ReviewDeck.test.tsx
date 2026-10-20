@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Card } from '@/lib/course/types'
@@ -27,7 +27,7 @@ describe('ReviewDeck', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
     await userEvent.click(screen.getByRole('button', { name: 'Помню ✓' }))
     await userEvent.click(screen.getByRole('button', { name: 'Следующая карточка →' }))
-    expect(screen.getByText(/На сегодня всё/)).toBeInTheDocument()
+    expect(screen.getByText('На сегодня всё! 🎉 Повторено: 1 карточка.')).toBeInTheDocument()
     expect(useProgress.getState().cards['c-a'].box).toBe(2)
   })
 
@@ -39,19 +39,39 @@ describe('ReviewDeck', () => {
     expect(await screen.findByText('Забытый вопрос')).toBeInTheDocument()
   })
 
-  it('downloads progress as a JSON file', async () => {
+  it('keeps working after importing a file with corrupted entries', async () => {
+    const file = {
+      version: 1,
+      lessons: { a: null },
+      cards: { c: 'x', d: { box: 9, due: 'x' }, n: null, 'c-a': { box: 1, due: '2000-01-01' } },
+      code: { e: 5 },
+      customCards: { f: null },
+    }
+    expect(useProgress.getState().importProgress(JSON.stringify(file))).toBe(true)
+    render(<ReviewDeck cards={cards} />)
+    expect(await screen.findByText('Вопрос А')).toBeInTheDocument()
+  })
+
+  it('downloads progress as a JSON file and frees the link a moment later', () => {
+    vi.useFakeTimers()
     const createObjectURL = vi.fn(() => 'blob:progress')
+    const revokeObjectURL = vi.fn()
     URL.createObjectURL = createObjectURL
-    URL.revokeObjectURL = vi.fn()
+    URL.revokeObjectURL = revokeObjectURL
     // jsdom не умеет навигацию по ссылке-загрузке и пишет «Not implemented» в консоль.
     const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     try {
       render(<ReviewDeck cards={[]} />)
-      await userEvent.click(screen.getByRole('button', { name: 'Скачать прогресс' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Скачать прогресс' }))
       expect(createObjectURL).toHaveBeenCalledOnce()
       expect(anchorClick).toHaveBeenCalledOnce()
+      // Safari прерывает загрузку, если ссылку отозвать сразу после click()
+      expect(revokeObjectURL).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(1000)
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:progress')
     } finally {
       anchorClick.mockRestore()
+      vi.useRealTimers()
     }
   })
 })

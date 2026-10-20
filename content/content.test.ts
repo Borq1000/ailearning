@@ -8,6 +8,7 @@ import remarkMath from 'remark-math'
 import { describe, expect, it } from 'vitest'
 import { EXERCISES } from '@/content/attention/exercises'
 import { GLOSSARY } from '@/content/glossary'
+import { cardIdsInSource, readyCardIds } from '@/lib/course/card-ids'
 import { flatLessons, getCourse } from '@/lib/course/registry'
 import remarkSteps from '@/lib/mdx/remark-steps.mjs'
 
@@ -64,6 +65,11 @@ describe('course content integrity', () => {
         expect(count(src, 'Recall')).toBe(lesson.id === firstLessonId ? 0 : 1)
       })
 
+      it('lists the same card ids for the review badge as its `cards` export', async () => {
+        const mod = await compile(src)
+        expect(cardIdsInSource(src)).toEqual(mod.cards.map((c) => c.id))
+      })
+
       it('imports nothing (components come from mdx-components.tsx)', () => {
         expect(src).not.toMatch(/^import\s/m)
       })
@@ -94,5 +100,7 @@ describe('course content integrity', () => {
     const duplicates = labelled.filter((_, i) => stored.indexOf(stored[i]) !== i || stored.lastIndexOf(stored[i]) !== i)
     expect(duplicates, `gates sharing one progress key: ${duplicates.join(', ')}`).toEqual([])
     expect(new Set(cardIds).size).toBe(cardIds.length)
+    // значок «Повторение» в шапке знает ровно эти карточки
+    expect(readyCardIds()).toEqual(cardIds)
   })
 })

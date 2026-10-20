@@ -23,6 +23,31 @@ export function createMemoryStorage(): StateStorage {
   }
 }
 
+/** Сохранённый прогресс как есть, без разбора — для аварийной выгрузки. */
+export function readRawProgress(): string | null {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+/** Аварийный сброс: копия прогресса уходит в `ailearning:backup`, затем сам прогресс удаляется. */
+export function resetStoredProgress(): void {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (raw === null) return
+    try {
+      window.localStorage.setItem(BACKUP_KEY, raw)
+    } catch {
+      // места на копию нет — прогресс всё равно сбрасываем, иначе сайт не откроется
+    }
+    window.localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // хранилище недоступно — сбрасывать нечего
+  }
+}
+
 /** localStorage с защитой: битый JSON уходит в резервную копию, переполнение не роняет приложение. */
 export function createSafeStorage(): StateStorage {
   if (typeof window === 'undefined' || !isLocalStorageAvailable()) return createMemoryStorage()

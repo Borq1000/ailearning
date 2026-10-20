@@ -52,6 +52,18 @@ describe('Recall', () => {
     renderRecall(cards)
     expect(await screen.findAllByText(/Вопрос [АБ]/)).toHaveLength(2)
   })
+
+  it('treats fallback cards as practice: answering them passes the gate but schedules nothing', async () => {
+    useProgress.setState({ cards: { 'c-a': { box: 3, due: '2999-01-01' } } })
+    renderRecall(cards)
+    await screen.findByText('Вопрос А')
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Не помню ✗' }))
+    await userEvent.click(screen.getByRole('button', { name: 'да' }))
+    expect(useProgress.getState().gates.r1?.passed).toBe(true)
+    expect(useProgress.getState().cards).toEqual({ 'c-a': { box: 3, due: '2999-01-01' } })
+    expect(screen.getByText('✓ Разминка пройдена.')).toBeInTheDocument()
+  })
 })
 
 describe('Summary', () => {
