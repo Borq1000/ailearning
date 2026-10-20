@@ -22,3 +22,4 @@ npm run serve:out  # посмотреть сборку: http://localhost:3100
 
 `out/` — чистая статика. Для nginx: `try_files $uri $uri.html $uri/ =404;`.
 Адрес сайта для sitemap задаётся переменной `NEXT_PUBLIC_SITE_URL` при сборке.
+После `npm run build` автоматически запускается `scripts/flatten-segments.mjs` (`postbuild`): он исправляет расположение файлов префетча Next на Windows; на Linux/macOS он ничего не делает.

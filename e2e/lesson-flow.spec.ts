@@ -20,7 +20,10 @@ test('lesson 0.1 is walked step by step and remembers progress after reload', as
   await page.reload()
   await expect(page.locator('[data-step="1"]')).toHaveAttribute('data-state', 'open')
   await expect(page.locator('[data-step="2"]')).toHaveAttribute('data-state', 'teaser')
-  expect(errors.filter((e) => /hydrat/i.test(e))).toEqual([])
+  await page.waitForLoadState('networkidle')
+  // В production-сборке React сообщает о рассинхроне гидратации минифицированными кодами (#418/#423/#425),
+  // слова «hydrat» в них нет, поэтому проверяем отсутствие любых ошибок консоли и страницы
+  expect(errors).toEqual([])
 })
 
 for (const slug of READY) {

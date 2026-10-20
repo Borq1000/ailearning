@@ -1,7 +1,9 @@
-// Обход бага Next 16 на Windows: при `output: 'export'` файлы сегментов для префетча должны лежать плоско
-// (`__next.review.__PAGE__.txt`), но из-за обратных слэшей в path.relative попадают во вложенные папки
-// (`__next.review/__PAGE__.txt`), и браузер получает 404. На Linux/macOS вложенных папок нет — скрипт ничего не делает.
-import { promises as fs } from 'node:fs'
+// Обход бага Next 16 на Windows (наблюдался в 16.4.2): при `output: 'export'` файлы сегментов для префетча должны лежать
+// плоско (`__next.review.__PAGE__.txt`), но из-за обратных слэшей в path.relative попадают во вложенные папки
+// (`__next.review/__PAGE__.txt`). Симптом: 404 на RSC-файлы `__next.*.__PAGE__.txt` при префетче ссылок.
+// На Linux/macOS вложенных папок нет — скрипт ничего не делает.
+// Удалить, когда релиз Next начнёт писать плоские файлы сегментов на Windows (и убрать "postbuild" из package.json).
+import { existsSync, promises as fs } from 'node:fs'
 import path from 'node:path'
 
 const OUT = path.join(process.cwd(), 'out')
@@ -13,10 +15,18 @@ async function flatten(dir, prefix, destDir) {
     if (entry.isDirectory()) {
       await flatten(full, `${prefix}.${entry.name}`, destDir)
     } else {
-      await fs.rename(full, path.join(destDir, `${prefix}.${entry.name}`))
+      const dest = path.join(destDir, `${prefix}.${entry.name}`)
+      if (existsSync(dest)) {
+        console.warn(`flatten-segments: ${dest} уже существует, пропускаю ${full}`)
+        continue
+      }
+      await fs.rename(full, dest)
     }
   }
-  await fs.rmdir(dir)
+  // папка остаётся, если в ней что-то пропущено, — тогда rmdir бросит ENOTEMPTY, это не ошибка
+  await fs.rmdir(dir).catch((e) => {
+    if (e.code !== 'ENOTEMPTY') throw e
+  })
 }
 
 async function walk(dir) {
@@ -31,4 +41,8 @@ async function walk(dir) {
   }
 }
 
-await walk(OUT)
+if (!existsSync(OUT)) {
+  console.log('flatten-segments: папки out/ нет, пропускаю')
+} else {
+  await walk(OUT)
+}
