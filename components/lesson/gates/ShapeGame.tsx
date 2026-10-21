@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { plural } from '@/lib/plural'
 import { seededShuffle } from '@/lib/progress/scheduler'
 import { IMPOSSIBLE, formatShape, productShape, shapeOptions, type Shape } from '@/lib/viz/matrix-helpers'
@@ -23,6 +23,8 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
   const gate = useGate(id)
   const [round, setRound] = useState(0)
   const [wrong, setWrong] = useState<string | null>(null)
+  const [confirmed, setConfirmed] = useState<string | null>(null)
+  const optionsRef = useRef<HTMLDivElement>(null)
   const finished = gate.passed
   const current = rounds[Math.min(round, rounds.length - 1)]
   // порядок вариантов перемешан детерминированно: правильный ответ не стоит всегда первым
@@ -30,16 +32,28 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
   const answer = correctAnswer(current)
   const inner = current.a[1] === current.b[0]
 
+  // кнопка, на которую нажали, исчезает вместе с раундом: фокус переносим на первый вариант нового раунда
+  useEffect(() => {
+    if (round > 0) optionsRef.current?.querySelector('button')?.focus()
+  }, [round])
+
   function choose(option: string) {
     if (finished) return
+    setConfirmed(null)
     if (option !== answer) {
       setWrong(option)
       gate.record(false)
       return
     }
     setWrong(null)
-    if (round + 1 >= rounds.length) gate.record(true)
-    else setRound(round + 1)
+    if (round + 1 >= rounds.length) {
+      gate.record(true)
+      return
+    }
+    const shape = productShape(current.a, current.b)
+    const verdict = shape ? `A·B — ${formatShape(shape)}` : 'перемножить нельзя'
+    setConfirmed(`✓ Верно: ${verdict}. Раунд ${round + 2} из ${rounds.length}.`)
+    setRound(round + 1)
   }
 
   function showRule() {
@@ -59,7 +73,7 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
           <p className="gate-question">
             Раунд {round + 1} из {rounds.length}: A — {formatShape(current.a)}, B — {formatShape(current.b)}. Какой формы A·B?
           </p>
-          <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Форма результата">
+          <div ref={optionsRef} className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Форма результата">
             {options.map((option) => (
               <button
                 key={option}
@@ -73,6 +87,7 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
             ))}
           </div>
           <div role="status">
+            {confirmed && <p className="feedback-right">{confirmed}</p>}
             {wrong && (
               <p className="feedback-wrong">
                 Не то. Внутренние размеры: у A {current.a[1]} {plural(current.a[1], ['столбец', 'столбца', 'столбцов'])}, у B{' '}

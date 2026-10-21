@@ -22,11 +22,26 @@ describe('ShapeGame', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/Не то/)
     expect(useProgress.getState().gates.sg).toMatchObject({ passed: false, attempts: 1 })
     await userEvent.click(screen.getByRole('button', { name: '2×4' }))
-    expect(screen.getByText(/Раунд 2 из 2/)).toBeInTheDocument()
+    expect(screen.getByText(/Раунд 2 из 2: A —/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Перемножить нельзя' }))
     expect(useProgress.getState().gates.sg.passed).toBe(true)
     expect(screen.getByText(/Все раунды пройдены/)).toBeInTheDocument()
     expect(screen.getByText('2×3 · 2×3 → Перемножить нельзя')).toBeInTheDocument()
+  })
+
+  it('confirms a correct answer in a non-final round and moves focus to the next round', async () => {
+    render(<ShapeGame id="sg4" rounds={rounds} />)
+    await userEvent.click(screen.getByRole('button', { name: '2×4' }))
+    expect(screen.getByRole('status')).toHaveTextContent('✓ Верно: A·B — 2×4. Раунд 2 из 2.')
+    const first = screen.getAllByRole('button')[0]
+    expect(first).toHaveFocus()
+    await userEvent.click(screen.getByRole('button', { name: '3×2' }))
+    expect(screen.getByRole('status')).not.toHaveTextContent('✓ Верно')
+  })
+
+  it('does not move focus on the first render', () => {
+    render(<ShapeGame id="sg5" rounds={rounds} />)
+    expect(document.body).toHaveFocus()
   })
 
   it('offers the rule after two wrong answers and files it for review', async () => {
