@@ -61,3 +61,51 @@ for (const slug of READY) {
     expect(errors).toEqual([])
   })
 }
+
+test('lesson 0.1 can be completed end to end and stays completed after reload', async ({ page }) => {
+  await page.goto('/courses/attention/0-1-riddle')
+  const step = (i: number) => page.locator(`[data-step="${i}"]`)
+
+  await step(0).getByRole('radio', { name: 'забор' }).click()
+  await step(0).getByRole('button', { name: 'Зафиксировать прогноз' }).click()
+  await step(0).getByRole('button', { name: 'Дальше →' }).click()
+
+  await step(1).getByRole('radio', { name: 'кот' }).click()
+  await step(1).getByRole('button', { name: 'Зафиксировать прогноз' }).click()
+  await step(1).getByRole('button', { name: 'Дальше →' }).click()
+
+  await step(2).getByRole('radio', { name: '«Кот» и «забор» — оба мужского рода' }).click()
+  await step(2).getByRole('button', { name: 'Проверить' }).click()
+  await step(2).getByRole('button', { name: 'Дальше →' }).click()
+
+  await step(3).getByRole('radio', { name: /Самая толстая дуга переезжает/ }).click()
+  await step(3).getByRole('button', { name: 'Проверить' }).click()
+  await step(3).getByRole('button', { name: 'Дальше →' }).click()
+
+  await step(4).getByRole('group', { name: 'Варианты для «Я пью горячий…»' }).getByRole('button', { name: 'чай' }).click()
+  await step(4).getByRole('group', { name: 'Варианты для «Он открыл…»' }).getByRole('button', { name: 'дверь' }).click()
+  await step(4)
+    .getByRole('group', { name: 'Варианты для «В комнате было душно, и он открыл…»' })
+    .getByRole('button', { name: 'окно' })
+    .click()
+  await step(4).getByRole('button', { name: 'Дальше →' }).click()
+
+  await step(5)
+    .getByRole('textbox', { name: 'Твоё объяснение' })
+    .fill('Грамматика не помогает: оба слова мужского рода, решает смысл последнего слова.')
+  await step(5).getByRole('button', { name: 'Сравнить с эталоном' }).click()
+  await step(5).getByRole('button', { name: 'Готово, я сравнил' }).click()
+  await step(5).getByRole('button', { name: 'Дальше →' }).click()
+
+  await step(6).getByRole('button', { name: 'Завершить урок ✓' }).click()
+  await expect(page.getByText(/Урок пройден/)).toBeVisible()
+  await expect(step(6).getByText(/3 карточки добавлены/)).toBeVisible()
+
+  await page.reload()
+  await expect(page.getByText(/Урок пройден/)).toBeVisible()
+  for (const i of [0, 1, 2, 3, 4, 5, 6]) await expect(step(i)).toHaveAttribute('data-state', 'open')
+  // карточки урока встали в очередь под курсом
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('ailearning:v1')!))
+  expect(stored.version).toBe(2)
+  expect(Object.keys(stored.state.cards)).toEqual(expect.arrayContaining(['attention/c-0-1-next-word']))
+})

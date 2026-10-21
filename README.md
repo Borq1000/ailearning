@@ -20,8 +20,10 @@ npm run serve:out  # то же на :3100 (этот адрес использу�
 ## Как устроен урок
 
 Урок — файл `content/attention/lessons/<slug>.mdx`. Шаги разделяются строкой `---`.
-Интерактивные компоненты (`<Predict>`, `<Check>`, `<VectorSpace3D>`, `<CodeExercise>` …) регистрируются в `mdx-components.tsx`.
+Интерактивные компоненты (`<Predict>`, `<Check>`, `<VectorSpace3D>`, `<MatrixTransform3D>`, `<MatMulExplorer>`, `<ShapeGame>`, `<SoftmaxBars>`, `<CodeExercise>` …) регистрируются в `mdx-components.tsx`.
 Новый урок нужно добавить в `content/attention/course.ts` и пометить `availability: 'ready'`. `content/content.test.ts` проверит его состав.
+
+Прогресс хранится под курсом: в MDX id короткие (`1-4-check-shape`), в localStorage — `attention/1-4-check-shape`. Префикс добавляет `LessonProvider`; при обращении к прогрессу из навигации используй `scopeId(course.id, id)`.
 
 ## Публикация
 
