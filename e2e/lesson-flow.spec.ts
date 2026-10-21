@@ -26,6 +26,18 @@ test('lesson 0.1 is walked step by step and remembers progress after reload', as
   expect(errors).toEqual([])
 })
 
+test('clickable controls show the hand cursor and disabled ones do not', async ({ page }) => {
+  await page.goto('/courses/attention/0-1-riddle')
+  const step0 = page.locator('[data-step="0"]')
+  const option = step0.getByRole('radio', { name: 'забор' })
+  const commit = step0.getByRole('button', { name: 'Зафиксировать прогноз' })
+  await expect(option).toHaveCSS('cursor', 'pointer')
+  await expect(commit).toBeDisabled()
+  await expect(commit).not.toHaveCSS('cursor', 'pointer')
+  await option.click()
+  await expect(commit).toHaveCSS('cursor', 'pointer')
+})
+
 test('two open tabs of a lesson do not overwrite each other’s progress', async ({ context }) => {
   const url = '/courses/attention/0-1-riddle'
   const b = await context.newPage()

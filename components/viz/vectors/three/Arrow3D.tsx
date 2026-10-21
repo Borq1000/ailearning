@@ -1,12 +1,20 @@
 'use client'
 
+import { useCursor } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
-import { useMemo } from 'react'
-import { Quaternion, Vector3 } from 'three'
+import { useMemo, useState } from 'react'
+import { Quaternion, Vector3, type Object3D } from 'three'
 import type { Vec } from '@/lib/math'
 
 export function pad3(v: Vec): [number, number, number] {
   return [v[0] ?? 0, v[1] ?? 0, v[2] ?? 0]
+}
+
+/** Стрелка — ближайший к камере объект под курсором (а не, например, шарик перетаскивания на её кончике). */
+function isFrontHit(e: ThreeEvent<PointerEvent>): boolean {
+  let object: Object3D | null = e.intersections[0]?.object ?? null
+  while (object && object !== e.eventObject) object = object.parent
+  return object !== null
 }
 
 export function Arrow3D({
@@ -32,9 +40,21 @@ export function Arrow3D({
     return { length: dir.length(), start: s, quaternion: q }
   }, [from, to])
 
+  // Рука над стрелкой, которую можно нажать. Не перебиваем курсор шарика перетаскивания: руки нет,
+  // если спереди шарик или зажата кнопка мыши (шарик тянут).
+  const [hovered, setHovered] = useState(false)
+  useCursor(hovered)
+  const hover = onClick
+    ? {
+        onPointerOver: (e: ThreeEvent<PointerEvent>) => setHovered(e.nativeEvent.buttons === 0 && isFrontHit(e)),
+        onPointerMove: (e: ThreeEvent<PointerEvent>) => setHovered(e.nativeEvent.buttons === 0 && isFrontHit(e)),
+        onPointerOut: () => setHovered(false),
+      }
+    : {}
+
   if (length < 1e-6) {
     return (
-      <mesh position={pad3(from)} onClick={onClick}>
+      <mesh position={pad3(from)} onClick={onClick} {...hover}>
         <sphereGeometry args={[radius * 2, 16, 16]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.4} />
       </mesh>
@@ -44,7 +64,7 @@ export function Arrow3D({
   const head = Math.min(0.3, length * 0.35)
   const shaft = length - head
   return (
-    <group position={start} quaternion={quaternion} onClick={onClick}>
+    <group position={start} quaternion={quaternion} onClick={onClick} {...hover}>
       <mesh position={[0, shaft / 2, 0]}>
         <cylinderGeometry args={[radius, radius, shaft, 12]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} />
