@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { CourseMeta } from '@/lib/course/types'
+import { scopeId } from '@/lib/progress/scope'
 import { useProgress } from '@/lib/progress/store'
 import { useHydrated } from '@/lib/progress/useHydrated'
 
@@ -42,7 +43,7 @@ export function CourseNavList({ course, currentSlug }: { course: CourseMeta; cur
                     aria-current={current ? 'page' : undefined}
                     className={`flex items-center gap-2 rounded-md px-2 py-1 transition hover:bg-paper-deep ${current ? 'bg-paper-deep font-semibold' : ''}`}
                   >
-                    <StatusDot status={hydrated ? lessons[l.id]?.status : undefined} />
+                    <StatusDot status={hydrated ? lessons[scopeId(course.id, l.id)]?.status : undefined} />
                     {l.id} {l.title}
                   </Link>
                 </li>

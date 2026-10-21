@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import { scopeId } from '@/lib/progress/scope'
 import { listCourses, readyLessons } from './registry'
 
 /**
@@ -14,13 +15,13 @@ export function cardIdsInSource(source: string): string[] {
   return [...block.matchAll(/\bid:\s*(['"])(.+?)\1/g)].map((match) => match[2])
 }
 
-/** id всех карточек готовых уроков всех курсов — колода повторения. Только для сервера (читает файлы при сборке). */
+/** id всех карточек готовых уроков всех курсов в ключах прогресса (под курсом) — колода повторения. Только для сервера (читает файлы при сборке). */
 export function readyCardIds(): string[] {
   return listCourses().flatMap((course) =>
     readyLessons(course).flatMap((lesson) =>
       cardIdsInSource(
         readFileSync(path.join(process.cwd(), 'content', course.id, 'lessons', `${lesson.slug}.mdx`), 'utf8'),
-      ),
+      ).map((id) => scopeId(course.id, id)),
     ),
   )
 }

@@ -2,10 +2,11 @@ import Link from 'next/link'
 import { ContinueButton } from '@/components/course/ContinueButton'
 import { CourseCard } from '@/components/course/CourseCard'
 import { WordCloud3D } from '@/components/viz/words/WordCloud3D'
-import { getCourse } from '@/lib/course/registry'
+import { listCourses } from '@/lib/course/registry'
 
 export default function Home() {
-  const course = getCourse('attention')!
+  const courses = listCourses()
+  const course = courses[0]
   return (
     <main>
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-14 lg:grid-cols-[1.05fr_1fr] lg:px-8 lg:py-20">
@@ -30,7 +31,9 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-4 pb-20 lg:px-8">
         <h2 className="font-serif text-3xl">Курсы</h2>
         <div className="mt-6 grid gap-5 md:grid-cols-2">
-          <CourseCard course={course} />
+          {courses.map((c, i) => (
+            <CourseCard key={c.id} course={c} index={i + 1} />
+          ))}
           <div className="rounded-2xl border border-dashed border-line p-6">
             <p className="gate-label">Скоро</p>
             <h3 className="mt-2 font-serif text-2xl text-muted">Как модели учатся</h3>

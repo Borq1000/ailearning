@@ -21,11 +21,12 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 export default async function CoursePage({ params }: { params: Promise<Params> }) {
   const course = getCourse((await params).course)
   if (!course) notFound()
+  const index = listCourses().findIndex((c) => c.id === course.id) + 1
   const total = flatLessons(course).length
   const ready = readyLessons(course).length
   return (
     <main className="mx-auto max-w-[760px] px-4 py-12">
-      <p className="gate-label">Курс 1</p>
+      <p className="gate-label">Курс {index}</p>
       <h1 className="mt-2 font-serif text-5xl leading-tight">{course.title}</h1>
       <p className="mt-4 text-lg text-ink-soft">{course.subtitle}</p>
       <p className="mt-3 text-sm text-muted">

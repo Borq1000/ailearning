@@ -9,8 +9,9 @@ import { describe, expect, it } from 'vitest'
 import { EXERCISES } from '@/content/attention/exercises'
 import { GLOSSARY } from '@/content/glossary'
 import { cardIdsInSource, readyCardIds } from '@/lib/course/card-ids'
-import { flatLessons, getCourse } from '@/lib/course/registry'
+import { findLessonById, flatLessons, getCourse } from '@/lib/course/registry'
 import remarkSteps from '@/lib/mdx/remark-steps.mjs'
+import { scopeId } from '@/lib/progress/scope'
 
 const course = getCourse('attention')!
 const lessonsDir = path.join(process.cwd(), 'content/attention/lessons')
@@ -81,6 +82,14 @@ describe('course content integrity', () => {
     })
   }
 
+  it('points every glossary term to an existing lesson of an existing course', () => {
+    for (const entry of Object.values(GLOSSARY)) {
+      const termCourse = getCourse(entry.courseId)
+      expect(termCourse, `term ${entry.id}: unknown course ${entry.courseId}`).toBeDefined()
+      expect(findLessonById(termCourse!, entry.lessonId), `term ${entry.id}: unknown lesson ${entry.lessonId}`).toBeDefined()
+    }
+  })
+
   it('uses unique gate ids and card ids across the course', async () => {
     // Progress is keyed by the bare id (useProgress.gates[id]); CodeExercise stores `code:${id}`.
     const stored: string[] = []
@@ -101,6 +110,6 @@ describe('course content integrity', () => {
     expect(duplicates, `gates sharing one progress key: ${duplicates.join(', ')}`).toEqual([])
     expect(new Set(cardIds).size).toBe(cardIds.length)
     // значок «Повторение» в шапке знает ровно эти карточки
-    expect(readyCardIds()).toEqual(cardIds)
+    expect(readyCardIds()).toEqual(cardIds.map((id) => scopeId(course.id, id)))
   })
 })

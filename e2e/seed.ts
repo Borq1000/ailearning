@@ -6,8 +6,8 @@ export async function seedProgress(page: Page, state: Record<string, unknown>): 
     window.localStorage.setItem(
       'ailearning:v1',
       JSON.stringify({
-        version: 1,
-        state: { version: 1, lessons: {}, gates: {}, code: {}, explanations: {}, cards: {}, customCards: {}, ...data },
+        version: 2,
+        state: { version: 2, lessons: {}, gates: {}, code: {}, explanations: {}, cards: {}, customCards: {}, ...data },
       }),
     )
   }, state)

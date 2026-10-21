@@ -65,10 +65,12 @@ describe('course registry', () => {
 
   it('suggests the first unfinished ready lesson, or the last one when all are done', () => {
     expect(nextLessonToStudy(course, {})?.id).toBe('0.1')
-    expect(nextLessonToStudy(course, { '0.1': { status: 'completed' } })?.id).toBe('1.1')
+    expect(nextLessonToStudy(course, { 'test/0.1': { status: 'completed' } })?.id).toBe('1.1')
     expect(
-      nextLessonToStudy(course, { '0.1': { status: 'completed' }, '1.1': { status: 'completed' } })?.id,
+      nextLessonToStudy(course, { 'test/0.1': { status: 'completed' }, 'test/1.1': { status: 'completed' } })?.id,
     ).toBe('1.1')
+    // статус без префикса курса — чужой: его не замечаем
+    expect(nextLessonToStudy(course, { '0.1': { status: 'completed' } })?.id).toBe('0.1')
   })
 
   it('ships the attention course with unique ids and slugs', () => {

@@ -141,7 +141,7 @@ describe('Term', () => {
   })
 
   it('links back to the lesson once the term has been studied', async () => {
-    useProgress.getState().completeLesson('1.3', [], '2026-10-20')
+    useProgress.getState().completeLesson('attention/1.3', [], '2026-10-20')
     render(<Term id="dot-product">скалярное произведение</Term>)
     await userEvent.click(screen.getByRole('button', { name: 'скалярное произведение' }))
     const link = screen.getByRole('link', { name: /^Урок 1\.3: / })

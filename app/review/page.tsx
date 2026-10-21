@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ReviewDeck } from '@/components/review/ReviewDeck'
 import { loadLessonModule } from '@/lib/course/lesson-module'
 import { listCourses, readyLessons } from '@/lib/course/registry'
+import { scopeId } from '@/lib/progress/scope'
 
 export const metadata: Metadata = {
   title: 'Повторение',
@@ -9,9 +10,17 @@ export const metadata: Metadata = {
 }
 
 export default async function ReviewPage() {
-  const modules = await Promise.all(
-    listCourses().flatMap((course) => readyLessons(course).map((l) => loadLessonModule(course.id, l.slug))),
-  )
+  const cards = (
+    await Promise.all(
+      listCourses().flatMap((course) =>
+        readyLessons(course).map(async (lesson) => {
+          const mod = await loadLessonModule(course.id, lesson.slug)
+          // в колоде карточки живут под курсом — так же, как в прогрессе
+          return mod.cards.map((card) => ({ ...card, id: scopeId(course.id, card.id) }))
+        }),
+      ),
+    )
+  ).flat()
   return (
     <main className="mx-auto max-w-[680px] px-4 py-12">
       <p className="gate-label">Интервальное повторение</p>
@@ -20,7 +29,7 @@ export default async function ReviewPage() {
         Карточки возвращаются через 1, 3, 7, 16 и 35 дней. Отвечай по памяти — именно это укрепляет знания.
       </p>
       <div className="mt-8">
-        <ReviewDeck cards={modules.flatMap((m) => m.cards)} />
+        <ReviewDeck cards={cards} />
       </div>
     </main>
   )

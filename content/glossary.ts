@@ -2,11 +2,12 @@ export interface GlossaryEntry {
   id: string
   term: string
   short: string
-  /** Урок курса «attention», где термин вводится. */
+  /** Курс и урок, где термин вводится. */
+  courseId: string
   lessonId: string
 }
 
-const entries: GlossaryEntry[] = [
+const attentionTerms: Omit<GlossaryEntry, 'courseId'>[] = [
   {
     id: 'attention',
     term: 'Внимание (attention)',
@@ -110,5 +111,7 @@ const entries: GlossaryEntry[] = [
     lessonId: '2.2',
   },
 ]
+
+const entries: GlossaryEntry[] = attentionTerms.map((entry) => ({ ...entry, courseId: 'attention' }))
 
 export const GLOSSARY: Record<string, GlossaryEntry> = Object.fromEntries(entries.map((e) => [e.id, e]))

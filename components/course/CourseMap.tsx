@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { getCourse } from '@/lib/course/registry'
 import { LEVEL_LABEL } from '@/lib/course/types'
+import { scopeId } from '@/lib/progress/scope'
 import { useProgress } from '@/lib/progress/store'
 import { useHydrated } from '@/lib/progress/useHydrated'
 
@@ -18,7 +19,7 @@ export function CourseMap({ courseId = 'attention' }: { courseId?: string }) {
     <ol className="relative my-8 list-none space-y-3 p-0 before:absolute before:top-4 before:bottom-4 before:left-[19px] before:w-px before:bg-line">
       {course.modules.map((m) => {
         const hasReady = m.lessons.some((l) => l.availability === 'ready')
-        const done = hydrated ? m.lessons.filter((l) => lessons[l.id]?.status === 'completed').length : 0
+        const done = hydrated ? m.lessons.filter((l) => lessons[scopeId(course.id, l.id)]?.status === 'completed').length : 0
         const expanded = open === m.id
         return (
           <li key={m.id} className="relative m-0 pl-14">

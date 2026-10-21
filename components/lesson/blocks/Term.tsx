@@ -2,16 +2,16 @@
 
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { attentionCourse } from '@/content/attention/course'
 import { GLOSSARY } from '@/content/glossary'
-import { findLessonById } from '@/lib/course/registry'
+import { findLessonById, getCourse } from '@/lib/course/registry'
 import type { FlatLesson } from '@/lib/course/types'
+import { scopeId } from '@/lib/progress/scope'
 import { useProgress } from '@/lib/progress/store'
 import { useLessonOptional } from '@/components/lesson/engine/LessonContext'
 
 /** Строка под определением: где термин объясняется подробно. */
-function LessonNote({ lesson, known, here }: { lesson: FlatLesson; known: boolean; here: boolean }) {
-  const href = `/courses/attention/${lesson.slug}`
+function LessonNote({ courseId, lesson, known, here }: { courseId: string; lesson: FlatLesson; known: boolean; here: boolean }) {
+  const href = `/courses/${courseId}/${lesson.slug}`
   const ready = lesson.availability === 'ready'
   if (known) {
     // Термин уже знаком — ссылка ведёт назад, чтобы освежить урок. На открытый сейчас урок ссылаться незачем.
@@ -37,8 +37,11 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
   const rootRef = useRef<HTMLSpanElement>(null)
   const popoverId = useId()
   const current = useLessonOptional()
-  const lesson = entry ? findLessonById(attentionCourse, entry.lessonId) : undefined
-  const studied = useProgress((s) => (lesson ? s.lessons[lesson.id]?.status === 'completed' : false))
+  const course = entry ? getCourse(entry.courseId) : undefined
+  const lesson = entry && course ? findLessonById(course, entry.lessonId) : undefined
+  const studied = useProgress((s) =>
+    course && lesson ? s.lessons[scopeId(course.id, lesson.id)]?.status === 'completed' : false,
+  )
 
   useEffect(() => {
     if (!open) return
@@ -58,7 +61,7 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
 
   if (!entry) return <>{children}</>
 
-  const here = current?.lessonId === lesson?.id
+  const here = current?.courseId === course?.id && current?.lessonId === lesson?.id
 
   return (
     <span ref={rootRef} className="relative">
@@ -75,7 +78,7 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
         <span id={popoverId} role="dialog" aria-label={entry.term} className="term-popover">
           <span className="block font-serif text-base font-semibold">{entry.term}</span>
           <span className="mt-1 block text-sm">{entry.short}</span>
-          {lesson && <LessonNote lesson={lesson} known={studied || here} here={here} />}
+          {course && lesson && <LessonNote courseId={course.id} lesson={lesson} known={studied || here} here={here} />}
         </span>
       )}
     </span>

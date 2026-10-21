@@ -16,8 +16,8 @@ describe('CourseNavList', () => {
   it('shows statuses and ignores progress for lessons that no longer exist', async () => {
     useProgress.setState({
       lessons: {
-        '0.1': { status: 'completed', unlockedStep: 3 },
-        '9.9': { status: 'completed', unlockedStep: 1 },
+        'attention/0.1': { status: 'completed', unlockedStep: 3 },
+        'attention/9.9': { status: 'completed', unlockedStep: 1 },
       },
     })
     await useProgress.persist.rehydrate()
@@ -42,10 +42,19 @@ describe('ContinueButton', () => {
 
 describe('ContinueButton with stale progress', () => {
   it('still invites to start when progress holds only unknown lesson ids', async () => {
-    useProgress.setState({ lessons: { '9.9': { status: 'completed', unlockedStep: 0 } } })
+    useProgress.setState({ lessons: { 'attention/9.9': { status: 'completed', unlockedStep: 0 } } })
     await useProgress.persist.rehydrate()
     render(<ContinueButton course={attentionCourse} />)
     expect(screen.getByRole('link', { name: /Начать с первого урока/ })).toBeInTheDocument()
+  })
+})
+
+describe('ContinueButton after the first lesson', () => {
+  it('continues with the next lesson when progress is stored under the course', async () => {
+    useProgress.setState({ lessons: { 'attention/0.1': { status: 'completed', unlockedStep: 6 } } })
+    await useProgress.persist.rehydrate()
+    render(<ContinueButton course={attentionCourse} />)
+    expect(screen.getByRole('link', { name: /Продолжить: 0\.2/ })).toHaveAttribute('href', '/courses/attention/0-2-journey-map')
   })
 })
 

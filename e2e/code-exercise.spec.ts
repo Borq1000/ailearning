@@ -13,7 +13,7 @@ async function typeSolution(page: Page, code: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await seedProgress(page, { lessons: { '1.3': { status: 'completed', unlockedStep: 0 } } })
+  await seedProgress(page, { lessons: { 'attention/1.3': { status: 'completed', unlockedStep: 0 } } })
   await page.goto('/courses/attention/1-3-dot-product')
 })
 

@@ -1,4 +1,5 @@
 import { attentionCourse } from '@/content/attention/course'
+import { scopeId } from '@/lib/progress/scope'
 import type { CourseMeta, FlatLesson } from './types'
 
 const COURSES: Record<string, CourseMeta> = { [attentionCourse.id]: attentionCourse }
@@ -42,10 +43,11 @@ export function lessonsBefore(course: CourseMeta, slug: string): FlatLesson[] {
   return flat.slice(0, Math.max(i, 0)).filter((l) => l.availability === 'ready')
 }
 
+/** Первый непройденный готовый урок (статусы — по ключам прогресса под курсом) или последний готовый. */
 export function nextLessonToStudy(
   course: CourseMeta,
   statuses: Record<string, { status: string } | undefined>,
 ): FlatLesson | undefined {
   const ready = readyLessons(course)
-  return ready.find((l) => statuses[l.id]?.status !== 'completed') ?? ready[ready.length - 1]
+  return ready.find((l) => statuses[scopeId(course.id, l.id)]?.status !== 'completed') ?? ready[ready.length - 1]
 }
