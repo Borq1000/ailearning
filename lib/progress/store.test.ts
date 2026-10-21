@@ -65,7 +65,7 @@ describe('progress store', () => {
 
   it('imports a file with corrupted entries but stores only the valid ones', () => {
     const file = {
-      version: 1,
+      version: 2,
       lessons: { a: null, ok: { status: 'completed', unlockedStep: 2 } },
       cards: { c: 'x', d: { box: 9, due: 'x' }, good: { box: 2, due: '2026-10-22' } },
       code: { e: 5, dot: 'function dot() {}' },
@@ -90,12 +90,12 @@ describe('progress store', () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        version: 1,
-        state: { ...emptyProgress(), lessons: { '0.1': { status: 'completed', unlockedStep: 3 } } },
+        version: 2,
+        state: { ...emptyProgress(), lessons: { 'attention/0.1': { status: 'completed', unlockedStep: 3 } } },
       }),
     )
     await useProgress.persist.rehydrate()
-    expect(s().lessons['0.1'].status).toBe('completed')
+    expect(s().lessons['attention/0.1'].status).toBe('completed')
   })
 })
 
@@ -239,5 +239,48 @@ describe('emergency recovery helpers', () => {
     localStorage.setItem(BACKUP_KEY, 'older')
     resetStoredProgress()
     expect(localStorage.getItem(BACKUP_KEY)).toBe('older')
+  })
+})
+
+describe('migration to schema v2 (course-scoped keys)', () => {
+  const v1 = {
+    version: 1,
+    lessons: { '0.1': { status: 'completed', unlockedStep: 3 } },
+    gates: { '0-1-check-grammar': { passed: true, attempts: 1, revealed: false } },
+    code: { dot: 'function dot() {}' },
+    explanations: { '1-1-explain': 'моё объяснение' },
+    cards: { 'c-0-1-attention': { box: 2, due: '2026-10-23' }, 'check:0-1-check-arcs': { box: 1, due: '2026-10-21' } },
+    customCards: { 'check:0-1-check-arcs': { id: 'check:0-1-check-arcs', kind: 'flip', prompt: 'В', answer: 'О' } },
+  }
+
+  it('puts every v1 key under the attention course', () => {
+    const p = migrateProgress(v1, 1)
+    expect(p.version).toBe(2)
+    expect(p.lessons).toEqual({ 'attention/0.1': { status: 'completed', unlockedStep: 3 } })
+    expect(Object.keys(p.gates)).toEqual(['attention/0-1-check-grammar'])
+    expect(p.code).toEqual({ 'attention/dot': 'function dot() {}' })
+    expect(p.explanations).toEqual({ 'attention/1-1-explain': 'моё объяснение' })
+    expect(Object.keys(p.cards).sort()).toEqual(['attention/c-0-1-attention', 'attention/check:0-1-check-arcs'])
+    // у карточки-копии меняется и внутренний id: по нему её находит колода
+    expect(p.customCards['attention/check:0-1-check-arcs']).toMatchObject({ id: 'attention/check:0-1-check-arcs', prompt: 'В' })
+  })
+
+  it('loads v1 progress saved by the previous version of the site', async () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, state: v1 }))
+    await useProgress.persist.rehydrate()
+    expect(s().lessons['attention/0.1'].status).toBe('completed')
+    expect(s().lessons['0.1']).toBeUndefined()
+    expect(s().customCards['attention/check:0-1-check-arcs'].id).toBe('attention/check:0-1-check-arcs')
+  })
+
+  it('imports a v1 export file under the attention course', () => {
+    expect(s().importProgress(JSON.stringify(v1))).toBe(true)
+    expect(s().code).toEqual({ 'attention/dot': 'function dot() {}' })
+  })
+
+  it('still backs up and resets progress of an unknown version', () => {
+    const p = migrateProgress({ version: 7, lessons: { x: 1 } }, 7)
+    expect(p).toEqual(emptyProgress())
+    expect(localStorage.getItem(BACKUP_KEY)).toContain('"version":7')
   })
 })

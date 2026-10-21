@@ -1,11 +1,14 @@
 import type { Card } from '@/lib/course/types'
+import { scopeId, scopeKeys } from './scope'
 import { BACKUP_KEY } from './storage'
 import type { Box, CardState, GateProgress, LessonProgress, ProgressData } from './types'
 
-export const CURRENT_VERSION = 1
+export const CURRENT_VERSION = 2
+/** Курс, под которым жил весь прогресс до появления префиксов (схема v1): другого курса тогда не было. */
+export const LEGACY_COURSE_ID = 'attention'
 
 export function emptyProgress(): ProgressData {
-  return { version: 1, lessons: {}, gates: {}, code: {}, explanations: {}, cards: {}, customCards: {} }
+  return { version: 2, lessons: {}, gates: {}, code: {}, explanations: {}, cards: {}, customCards: {} }
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -74,7 +77,7 @@ function validEntries<T>(section: unknown, parse: (v: unknown) => T | null): Rec
 export function normalizeProgress(raw: unknown): ProgressData {
   const data = isPlainObject(raw) ? raw : {}
   return {
-    version: 1,
+    version: 2,
     lessons: validEntries(data.lessons, toLesson),
     gates: validEntries(data.gates, toGate),
     code: validEntries(data.code, toText),
@@ -92,9 +95,32 @@ function backupRaw(data: unknown): void {
   }
 }
 
-/** v1 — первая схема. Любая другая версия неизвестна: сохраняем копию и начинаем с чистого листа. */
+/** v1 → v2: все ключи получают префикс курса «attention»; у карточек-копий меняется и внутренний id. */
+export function upgradeV1(data: ProgressData): ProgressData {
+  const customCards = Object.fromEntries(
+    Object.entries(data.customCards).map(([id, card]) => {
+      const scoped = scopeId(LEGACY_COURSE_ID, id)
+      return [scoped, { ...card, id: scoped }]
+    }),
+  )
+  return {
+    version: 2,
+    lessons: scopeKeys(data.lessons, LEGACY_COURSE_ID),
+    gates: scopeKeys(data.gates, LEGACY_COURSE_ID),
+    code: scopeKeys(data.code, LEGACY_COURSE_ID),
+    explanations: scopeKeys(data.explanations, LEGACY_COURSE_ID),
+    cards: scopeKeys(data.cards, LEGACY_COURSE_ID),
+    customCards,
+  }
+}
+
+/**
+ * v2 — текущая схема (ключи под курсом). v1 — та же схема без префиксов: поднимаем.
+ * Любая другая версия неизвестна: сохраняем копию и начинаем с чистого листа.
+ */
 export function migrateProgress(persisted: unknown, version: number): ProgressData {
   if (version === CURRENT_VERSION) return normalizeProgress(persisted)
+  if (version === 1) return upgradeV1(normalizeProgress(persisted))
   backupRaw(persisted)
   return emptyProgress()
 }

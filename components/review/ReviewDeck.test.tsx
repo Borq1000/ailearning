@@ -41,7 +41,7 @@ describe('ReviewDeck', () => {
 
   it('keeps working after importing a file with corrupted entries', async () => {
     const file = {
-      version: 1,
+      version: 2,
       lessons: { a: null },
       cards: { c: 'x', d: { box: 9, due: 'x' }, n: null, 'c-a': { box: 1, due: '2000-01-01' } },
       code: { e: 5 },

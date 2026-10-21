@@ -105,8 +105,10 @@ export const useProgress = create<ProgressStore>()(
         try {
           const parsed: unknown = JSON.parse(json)
           if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return false
-          if ((parsed as { version?: unknown }).version !== CURRENT_VERSION) return false
-          set(normalizeProgress(parsed))
+          const version = (parsed as { version?: unknown }).version
+          // файлы старого формата (без префиксов курса) поднимаем так же, как сохранённый прогресс
+          if (version !== 1 && version !== CURRENT_VERSION) return false
+          set(migrateProgress(parsed, version))
           return true
         } catch {
           return false

@@ -42,7 +42,7 @@ describe('ReviewBadge', () => {
 
   it('does not crash after importing a file with corrupted entries', async () => {
     const file = {
-      version: 1,
+      version: 2,
       lessons: { a: null },
       cards: { c: 'x', d: { box: 9, due: 'x' }, n: null, ok: { box: 1, due: past } },
       code: { e: 5 },

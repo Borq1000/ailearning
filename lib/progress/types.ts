@@ -27,7 +27,7 @@ export interface CardState {
 }
 
 export interface ProgressData {
-  version: 1
+  version: 2
   lessons: Record<string, LessonProgress>
   gates: Record<string, GateProgress>
   code: Record<string, string>

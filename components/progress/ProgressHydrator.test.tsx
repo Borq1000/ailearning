@@ -10,8 +10,8 @@ function saveInAnotherTab(unlockedStep: number) {
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
-      version: 1,
-      state: { ...emptyProgress(), lessons: { '0.1': { status: 'in-progress', unlockedStep } } },
+      version: 2,
+      state: { ...emptyProgress(), lessons: { 'attention/0.1': { status: 'in-progress', unlockedStep } } },
     }),
   )
 }
@@ -23,7 +23,7 @@ function notify(key: string) {
   })
 }
 
-const unlocked = () => useProgress.getState().lessons['0.1']?.unlockedStep
+const unlocked = () => useProgress.getState().lessons['attention/0.1']?.unlockedStep
 
 describe('ProgressHydrator', () => {
   it('loads saved progress and follows changes made in another tab', async () => {
@@ -32,7 +32,7 @@ describe('ProgressHydrator', () => {
 
     saveInAnotherTab(1)
     notify(STORAGE_KEY)
-    expect(useProgress.getState().lessons['0.1']).toEqual({ status: 'in-progress', unlockedStep: 1 })
+    expect(useProgress.getState().lessons['attention/0.1']).toEqual({ status: 'in-progress', unlockedStep: 1 })
 
     saveInAnotherTab(2)
     notify('some-other-key')
