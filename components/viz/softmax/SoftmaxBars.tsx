@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { softmax } from '@/lib/math'
 import { formatNum } from '@/lib/viz/vector-helpers'
 import { NumberField } from '@/components/viz/stage/NumberField'
@@ -12,9 +12,14 @@ const MIN_TEMPERATURE = 0.2
 
 const COLORS = { score: '#22d3ee', exp: '#fb923c', share: '#a3e635', negative: '#fb7185' }
 
-/** Экспоненты быстро растут: от 10 000 показываем их в экспоненциальной записи. */
+/** Экспоненты быстро растут, а у отрицательных оценок почти исчезают: крайности показываем в экспоненциальной записи, чтобы не выдать «0». */
 function formatExp(x: number): string {
-  return x >= 10000 ? x.toExponential(2) : formatNum(x)
+  return x >= 10000 || (x > 0 && x < 0.01) ? x.toExponential(2) : formatNum(x)
+}
+
+/** Доля, которая округлилась бы до 0%, но не равна нулю, подписывается «<1%». */
+function formatPercent(x: number): string {
+  return x > 0 && x < 0.005 ? '<1%' : `${Math.round(x * 100)}%`
 }
 
 function BarColumn({
@@ -35,13 +40,18 @@ function BarColumn({
   /** Отрицательные значения рисуются другим цветом (только у оценок). */
   signed?: boolean
 }) {
+  const titleId = useId()
   return (
     <div>
-      <p className="m-0 mb-2 font-mono text-[11px] tracking-wider text-space-muted uppercase">{title}</p>
-      <ul className="m-0 list-none space-y-1.5 p-0">
+      <p id={titleId} className="m-0 mb-2 font-mono text-[11px] tracking-wider text-space-muted uppercase">
+        {title}
+      </p>
+      <ul aria-labelledby={titleId} className="m-0 list-none space-y-1.5 p-0">
         {values.map((x, i) => (
           <li key={i} className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-2">
-            <span className="truncate text-space-muted">{names[i]}</span>
+            <span className="truncate text-space-muted" title={names[i]}>
+              {names[i]}
+            </span>
             <span className="bar-track">
               <span
                 className="bar-fill"
@@ -75,6 +85,7 @@ export function SoftmaxBars({
   const exps = scores.map((x) => Math.exp(x / temperature))
   const shares = softmax(scores, temperature)
   const total = shares.reduce((s, x) => s + x, 0)
+  const canAddTen = Math.max(...scores) + 10 <= SCORE_BOUND
 
   return (
     <Observatory
@@ -95,7 +106,9 @@ export function SoftmaxBars({
             <button
               type="button"
               className="stage-chip"
-              onClick={() => setScores(scores.map((x) => Math.min(SCORE_BOUND, x + 10)))}
+              disabled={!canAddTen}
+              title={canAddTen ? undefined : `Дальше оценки не растут: предел ${SCORE_BOUND}`}
+              onClick={() => setScores(scores.map((x) => x + 10))}
             >
               +10 ко всем
             </button>
@@ -148,11 +161,11 @@ export function SoftmaxBars({
           color={COLORS.exp}
         />
         <BarColumn
-          title="3 · доли: eˣ / сумма"
+          title={temperature === 1 ? '3 · доли: eˣ / сумма' : '3 · доли: e^(x/T) / сумма'}
           names={names}
           values={shares}
           max={1}
-          format={(x) => `${Math.round(x * 100)}%`}
+          format={formatPercent}
           color={COLORS.share}
         />
       </div>

@@ -21,6 +21,21 @@ describe('SoftmaxBars', () => {
     expect(readout()).toHaveTextContent('softmax = [0.66, 0.24, 0.1]')
   })
 
+  it('stops adding 10 before the bound so the shares never change', async () => {
+    render(<SoftmaxBars initial={[2, 1, 0.1]} />)
+    const button = screen.getByRole('button', { name: '+10 ко всем' })
+    for (let i = 0; i < 4; i++) await userEvent.click(button)
+    expect(button).toBeDisabled()
+    expect(screen.getByRole('textbox', { name: 'оценка x1' })).toHaveValue('42')
+    expect(readout()).toHaveTextContent('softmax = [0.66, 0.24, 0.1]')
+  })
+
+  it('never shows a tiny positive number as a plain zero', () => {
+    render(<SoftmaxBars initial={[5, 0, -10]} />)
+    expect(screen.getByText('4.54e-5')).toBeInTheDocument()
+    expect(screen.getByText('<1%')).toBeInTheDocument()
+  })
+
   it('sharpens with a lower temperature and survives huge scores without NaN', async () => {
     render(<SoftmaxBars initial={[2, 1, 0.1]} />)
     fireEvent.change(screen.getByRole('slider', { name: 'Температура' }), { target: { value: '0.5' } })
