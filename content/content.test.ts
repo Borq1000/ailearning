@@ -17,7 +17,7 @@ const course = getCourse('attention')!
 const lessonsDir = path.join(process.cwd(), 'content/attention/lessons')
 const ready = flatLessons(course).filter((l) => l.availability === 'ready')
 const firstLessonId = flatLessons(course)[0].id
-const GATE_TAGS = ['Predict', 'Check', 'Recall', 'ExplainBack', 'Faded', 'VectorTask', 'NextWordGame', 'CodeExercise']
+const GATE_TAGS = ['Predict', 'Check', 'Recall', 'ExplainBack', 'Faded', 'VectorTask', 'NextWordGame', 'ShapeGame', 'CodeExercise']
 
 const sourceOf = (slug: string) => readFileSync(path.join(lessonsDir, `${slug}.mdx`), 'utf8')
 const count = (src: string, tag: string) => (src.match(new RegExp(`<${tag}[\\s>/]`, 'g')) ?? []).length

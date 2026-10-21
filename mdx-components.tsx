@@ -16,6 +16,8 @@ import { LessonStep } from '@/components/lesson/engine/LessonStep'
 import { NextWordGame } from '@/components/lesson/gates/NextWordGame'
 import { Predict } from '@/components/lesson/gates/Predict'
 import { Recall } from '@/components/lesson/gates/Recall'
+import { ShapeGame } from '@/components/lesson/gates/ShapeGame'
+import { MatMulExplorer } from '@/components/viz/matrices/MatMulExplorer'
 import { MatrixTransform3D } from '@/components/viz/matrices/MatrixTransform3D'
 import { DotProduct3D } from '@/components/viz/vectors/DotProduct3D'
 import { VectorOps3D } from '@/components/viz/vectors/VectorOps3D'
@@ -46,6 +48,8 @@ const components: MDXComponents = {
   VectorOps3D,
   DotProduct3D,
   MatrixTransform3D,
+  MatMulExplorer,
+  ShapeGame,
 }
 
 export function useMDXComponents(): MDXComponents {

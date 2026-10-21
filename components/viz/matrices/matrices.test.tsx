@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { MatMulExplorer } from './MatMulExplorer'
 import { MatrixTransform3D } from './MatrixTransform3D'
 
 async function setField(name: string, value: string) {
@@ -47,5 +48,33 @@ describe('MatrixTransform3D without WebGL', () => {
     expect(screen.getByText(/строка 1:/)).toHaveTextContent('[1, 0, 0]·[1, 2, 3] = 1')
     await setField('v, координата z', '0')
     expect(readout()).toHaveTextContent('M·v = [1, 2, 0]')
+  })
+})
+
+describe('MatMulExplorer', () => {
+  it('multiplies and explains a clicked cell as row · column', async () => {
+    render(<MatMulExplorer a={[[1, 2], [3, 4]]} b={[[5, 6], [7, 8]]} />)
+    expect(screen.getByRole('button', { name: 'строка 2, столбец 1: 43' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'строка 1, столбец 2: 22' }))
+    expect(screen.getByRole('status')).toHaveTextContent('A[строка 1] · B[столбец 2] = 1·6 + 2·8 = 22')
+    expect(screen.getByRole('button', { name: 'строка 1, столбец 2: 22' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('transposes the right matrix on request and labels rows and columns', () => {
+    render(
+      <MatMulExplorer
+        a={[[1, 0, 1]]}
+        b={[[1, 0, 1], [0, 1, 1]]}
+        aLabel="Q"
+        bLabel="K"
+        transposeB
+        rowLabels={['кот']}
+        colLabels={['кот', 'забор']}
+      />,
+    )
+    expect(screen.getByText('Q·Kᵀ')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'строка 1, столбец 1: 2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'строка 1, столбец 2: 1' })).toBeInTheDocument()
+    expect(screen.getAllByRole('columnheader', { name: 'забор' }).length).toBeGreaterThan(0)
   })
 })

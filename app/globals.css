@@ -257,6 +257,30 @@
   .vector-label {
     @apply pointer-events-none font-mono text-xs font-semibold whitespace-nowrap select-none;
   }
+
+  /* ── таблицы матриц (MatMulExplorer) ─────────── */
+  .mat-table {
+    @apply border-separate border-spacing-0.5 text-center;
+  }
+  .mat-caption {
+    @apply mb-1 font-mono text-[11px] tracking-wider text-space-muted uppercase;
+    caption-side: top;
+  }
+  .mat-label {
+    @apply px-1.5 py-1 text-xs font-normal text-space-muted;
+  }
+  .mat-cell {
+    @apply min-w-10 rounded border border-white/10 px-2 py-1 text-space-text transition;
+  }
+  .mat-cell[data-hot='true'] {
+    @apply border-glow-cyan bg-glow-cyan/15 text-glow-cyan;
+  }
+  .mat-cell-btn {
+    @apply block w-full rounded px-1 hover:text-glow-lime;
+  }
+  .mat-cell-btn[aria-pressed='true'] {
+    @apply font-semibold text-glow-lime;
+  }
   .code-editor {
     @apply overflow-hidden rounded-lg border border-white/10 text-[13px];
   }
