@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { useProgress } from './store'
 import { emptyProgress, migrateProgress, normalizeProgress } from './migrate'
 import { BACKUP_KEY, STORAGE_KEY, createSafeStorage, readRawProgress, resetStoredProgress } from './storage'
+import { isBlockedByNewerVersion } from './version-guard'
 
 const today = '2026-10-20'
 const s = () => useProgress.getState()
@@ -201,10 +202,18 @@ describe('normalizeProgress / migrateProgress', () => {
     expect(p.lessons['9.9']).toBeDefined()
   })
 
-  it('backs up unknown versions and starts fresh', () => {
-    const p = migrateProgress({ lessons: { a: 1 } }, 99)
+  it('backs up unknown older versions and starts fresh', () => {
+    const p = migrateProgress({ lessons: { a: 1 } }, 0)
     expect(p).toEqual(emptyProgress())
     expect(JSON.parse(localStorage.getItem(BACKUP_KEY)!)).toEqual({ lessons: { a: 1 } })
+    expect(isBlockedByNewerVersion()).toBe(false)
+  })
+
+  it('never backs up or wipes a newer version: the tab is marked as outdated instead', () => {
+    localStorage.setItem(BACKUP_KEY, 'good backup')
+    expect(migrateProgress({ lessons: { a: 1 } }, 99)).toEqual(emptyProgress())
+    expect(localStorage.getItem(BACKUP_KEY)).toBe('good backup')
+    expect(isBlockedByNewerVersion()).toBe(true)
   })
 })
 
@@ -278,10 +287,10 @@ describe('migration to schema v2 (course-scoped keys)', () => {
     expect(s().code).toEqual({ 'attention/dot': 'function dot() {}' })
   })
 
-  it('still backs up and resets progress of an unknown version', () => {
-    const p = migrateProgress({ version: 7, lessons: { x: 1 } }, 7)
+  it('still backs up and resets progress of an unknown older version', () => {
+    const p = migrateProgress({ version: 0, lessons: { x: 1 } }, 0)
     expect(p).toEqual(emptyProgress())
-    expect(localStorage.getItem(BACKUP_KEY)).toContain('"version":7')
+    expect(localStorage.getItem(BACKUP_KEY)).toContain('"version":0')
   })
 
   it('restores a v1 backup envelope and rejects a broken one', () => {

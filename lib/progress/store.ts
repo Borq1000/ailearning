@@ -1,10 +1,18 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import type { Card } from '@/lib/course/types'
-import { CURRENT_VERSION, emptyProgress, isEmptyProgress, migrateProgress, normalizeProgress } from './migrate'
+import {
+  CURRENT_VERSION,
+  emptyProgress,
+  isEmptyProgress,
+  isFromNewerVersion,
+  migrateProgress,
+  normalizeProgress,
+} from './migrate'
 import { addDays, newCard, nextReview } from './scheduler'
-import { STORAGE_KEY, createSafeStorage, readBackup } from './storage'
+import { STORAGE_KEY, createSafeStorage, markLegacyImported, readBackup, readLegacyProgress } from './storage'
 import type { GateProgress, ProgressData } from './types'
+import { isBlockedByNewerVersion, markNewerVersion } from './version-guard'
 
 export interface ProgressActions {
   unlockStep(lessonId: string, stepIndex: number): void
@@ -34,9 +42,33 @@ function pickData(s: ProgressData): ProgressData {
 // Пока прогресс не загружен, запись пропускаем, чтобы пустое состояние не затёрло сохранённое.
 let loaded = false
 
+/** Прогресс более новой версии сайта не загружаем: вкладка помечается устаревшей, а данные остаются как есть. */
+function unlessNewer(raw: string | null): string | null {
+  if (raw === null || !isFromNewerVersion(raw)) return raw
+  markNewerVersion()
+  return null
+}
+
 function createGuardedStorage(): StateStorage {
   const storage = createSafeStorage()
-  return { ...storage, setItem: (key, value) => (loaded ? storage.setItem(key, value) : undefined) }
+  return {
+    ...storage,
+    getItem: (key) => {
+      const saved = storage.getItem(key)
+      if (saved !== null || key !== STORAGE_KEY || isBlockedByNewerVersion()) return unlessNewer(saved)
+      // Под новым ключом пусто: один раз переносим прогресс прошлой версии сайта (v1 или ранняя v2).
+      const legacy = unlessNewer(readLegacyProgress())
+      if (legacy === null) return null
+      // Копия сразу под новым ключом: перенос не пропадёт, даже если в этот визит ничего не изменится.
+      // Старый ключ не трогаем — его может писать открытая вкладка старой версии.
+      storage.setItem(STORAGE_KEY, legacy)
+      // отметку ставим, только если копия легла (при переполнении хранилища перенесём в следующий раз)
+      if (storage.getItem(STORAGE_KEY) !== null) markLegacyImported()
+      return legacy
+    },
+    // Устаревшая вкладка не пишет ничего: иначе её состояние затёрло бы прогресс новой версии.
+    setItem: (key, value) => (loaded && !isBlockedByNewerVersion() ? storage.setItem(key, value) : undefined),
+  }
 }
 
 export const useProgress = create<ProgressStore>()(

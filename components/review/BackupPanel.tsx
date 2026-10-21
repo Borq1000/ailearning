@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { downloadText } from '@/lib/download'
 import { todayISO } from '@/lib/progress/scheduler'
 import { readBackup } from '@/lib/progress/storage'
-import { isEmptyProgress } from '@/lib/progress/migrate'
+import { isEmptyProgress, isFromNewerVersion } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
 
 /** Резервная копия появляется, когда прогресс не удалось прочитать. Отсюда её можно вернуть или скачать. */
@@ -24,11 +24,10 @@ export function BackupPanel() {
 
   function restore() {
     setConfirming(false)
-    setMessage(
-      restoreBackup()
-        ? 'Резервная копия восстановлена.'
-        : 'Не получилось: копия повреждена или пуста. Скачай её — возможно, часть данных удастся достать вручную.',
-    )
+    if (restoreBackup()) setMessage('Резервная копия восстановлена.')
+    else if (isFromNewerVersion(readBackup() ?? ''))
+      setMessage('Копия сделана более новой версией сайта — обнови страницу и попробуй снова.')
+    else setMessage('Не получилось: копия повреждена или пуста. Скачай её — возможно, часть данных удастся достать вручную.')
   }
 
   return (

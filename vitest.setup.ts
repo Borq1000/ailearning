@@ -1,11 +1,13 @@
 import '@testing-library/jest-dom/vitest'
 import { afterEach } from 'vitest'
 import { cleanup } from '@testing-library/react'
+import { resetVersionGuard } from '@/lib/progress/version-guard'
 
 if (typeof window !== 'undefined') {
   afterEach(() => {
     cleanup()
     window.localStorage.clear()
+    resetVersionGuard()
   })
 
   class IntersectionObserverStub {

@@ -45,4 +45,17 @@ describe('ProgressHydrator', () => {
     notify(STORAGE_KEY)
     expect(unlocked()).toBe(2)
   })
+
+  it('ignores the key of the previous site version and follows only ailearning:v2', async () => {
+    const { unmount } = render(<ProgressHydrator />)
+    await waitFor(() => expect(useProgress.persist.hasHydrated()).toBe(true))
+
+    saveInAnotherTab(5)
+    // вкладка старой версии сайта пишет в свой ключ — эта вкладка не перечитывает прогресс
+    notify('ailearning:v1')
+    expect(unlocked()).not.toBe(5)
+    notify('ailearning:v2')
+    expect(unlocked()).toBe(5)
+    unmount()
+  })
 })

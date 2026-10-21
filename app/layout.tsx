@@ -4,6 +4,7 @@ import 'katex/dist/katex.min.css'
 import './globals.css'
 import { StorageBanner } from '@/components/layout/StorageBanner'
 import { TopBar } from '@/components/layout/TopBar'
+import { VersionBanner } from '@/components/layout/VersionBanner'
 import { ProgressHydrator } from '@/components/progress/ProgressHydrator'
 import { readyCardIds } from '@/lib/course/card-ids'
 import { SITE } from '@/lib/site'
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-dvh flex-col antialiased">
         <ProgressHydrator />
         <StorageBanner />
+        <VersionBanner />
         <TopBar knownCardIds={knownCardIds} />
         <div className="flex-1">{children}</div>
         <footer className="border-t border-line py-8 text-center text-xs text-muted">

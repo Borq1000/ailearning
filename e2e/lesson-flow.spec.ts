@@ -105,7 +105,31 @@ test('lesson 0.1 can be completed end to end and stays completed after reload', 
   await expect(page.getByText(/Урок пройден/)).toBeVisible()
   for (const i of [0, 1, 2, 3, 4, 5, 6]) await expect(step(i)).toHaveAttribute('data-state', 'open')
   // карточки урока встали в очередь под курсом
-  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('ailearning:v1')!))
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('ailearning:v2')!))
   expect(stored.version).toBe(2)
   expect(Object.keys(stored.state.cards)).toEqual(expect.arrayContaining(['attention/c-0-1-next-word']))
+})
+
+test('progress of the previous site version is carried over once and its key is left untouched', async ({ page }) => {
+  const legacy = JSON.stringify({
+    version: 1,
+    state: { version: 1, lessons: { '0.1': { status: 'completed', unlockedStep: 6 } }, gates: {}, code: {}, explanations: {}, cards: {}, customCards: {} },
+  })
+  // только перед первой загрузкой: после неё старый ключ пишет лишь вкладка старой версии
+  await page.goto('/')
+  await page.evaluate((value) => localStorage.setItem('ailearning:v1', value), legacy)
+
+  await page.goto('/courses/attention/0-1-riddle')
+  await expect(page.getByText(/Урок пройден/)).toBeVisible()
+  await page.reload()
+  await expect(page.getByText(/Урок пройден/)).toBeVisible()
+
+  const keys = await page.evaluate(() => ({
+    legacy: localStorage.getItem('ailearning:v1'),
+    marker: localStorage.getItem('ailearning:v1-imported'),
+    current: localStorage.getItem('ailearning:v2'),
+  }))
+  expect(keys.legacy).toBe(legacy)
+  expect(keys.marker).toBe('1')
+  expect(keys.current).not.toBeNull()
 })

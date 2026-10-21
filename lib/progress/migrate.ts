@@ -2,6 +2,7 @@ import type { Card } from '@/lib/course/types'
 import { scopeId, scopeKeys } from './scope'
 import { BACKUP_KEY } from './storage'
 import type { Box, CardState, GateProgress, LessonProgress, ProgressData } from './types'
+import { markNewerVersion } from './version-guard'
 
 export const CURRENT_VERSION = 2
 /** Курс, под которым жил весь прогресс до появления префиксов (схема v1): другого курса тогда не было. */
@@ -119,13 +120,34 @@ export function upgradeV1(data: ProgressData): ProgressData {
   }
 }
 
+/** Схема новее этой версии сайта: такие данные записала более новая вкладка. */
+export function isNewerVersion(version: unknown): boolean {
+  return typeof version === 'number' && version > CURRENT_VERSION
+}
+
+/** Сохранённый JSON — запись zustand persist `{ version, state }` или экспорт — сделан более новой версией сайта. */
+export function isFromNewerVersion(raw: string): boolean {
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return isPlainObject(parsed) && isNewerVersion(parsed.version)
+  } catch {
+    return false
+  }
+}
+
 /**
  * v2 — текущая схема (ключи под курсом). v1 — та же схема без префиксов: поднимаем.
- * Любая другая версия неизвестна: сохраняем копию и начинаем с чистого листа.
+ * Более новую схему не трогаем: вкладка помечается устаревшей (и больше не пишет), копия не делается —
+ * иначе пустой прогресс этой вкладки затёр бы хорошую копию.
+ * Остальные версии (0, мусор) неизвестны: сохраняем копию и начинаем с чистого листа.
  */
 export function migrateProgress(persisted: unknown, version: number): ProgressData {
   if (version === CURRENT_VERSION) return normalizeProgress(persisted)
   if (version === 1) return upgradeV1(normalizeProgress(persisted))
+  if (isNewerVersion(version)) {
+    markNewerVersion()
+    return emptyProgress()
+  }
   backupRaw(persisted)
   return emptyProgress()
 }

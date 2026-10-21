@@ -1,7 +1,19 @@
 import type { StateStorage } from 'zustand/middleware'
 
-export const STORAGE_KEY = 'ailearning:v1'
+export const STORAGE_KEY = 'ailearning:v2'
+/**
+ * Ключ прошлых версий сайта (M1a и ранние сборки M1b). Его читают и пишут вкладки старой версии,
+ * поэтому новый код читает его один раз — для переноса прогресса — и никогда не пишет и не удаляет.
+ */
+export const LEGACY_STORAGE_KEY = 'ailearning:v1'
+/** Отметка «прогресс из старого ключа уже перенесён»: после аварийного сброса он не должен вернуться. */
+export const LEGACY_IMPORTED_KEY = 'ailearning:v1-imported'
 export const BACKUP_KEY = 'ailearning:backup'
+
+/** Хранилище с синхронным чтением: localStorage или его замена в памяти. */
+export interface SyncStorage extends StateStorage<void> {
+  getItem: (key: string) => string | null
+}
 
 export function isLocalStorageAvailable(): boolean {
   try {
@@ -14,7 +26,7 @@ export function isLocalStorageAvailable(): boolean {
   }
 }
 
-export function createMemoryStorage(): StateStorage {
+export function createMemoryStorage(): SyncStorage {
   const memory = new Map<string, string>()
   return {
     getItem: (key) => memory.get(key) ?? null,
@@ -29,6 +41,30 @@ export function readRawProgress(): string | null {
     return window.localStorage.getItem(STORAGE_KEY)
   } catch {
     return null
+  }
+}
+
+/**
+ * Прогресс из старого ключа для одноразового переноса. null — если его уже перенесли, если его нет
+ * или он не разбирается как JSON (тогда его не трогаем: старая вкладка разберётся с ним сама).
+ */
+export function readLegacyProgress(): string | null {
+  try {
+    if (window.localStorage.getItem(LEGACY_IMPORTED_KEY) !== null) return null
+    const raw = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (raw === null) return null
+    JSON.parse(raw)
+    return raw
+  } catch {
+    return null
+  }
+}
+
+export function markLegacyImported(): void {
+  try {
+    window.localStorage.setItem(LEGACY_IMPORTED_KEY, '1')
+  } catch {
+    // хранилище недоступно — переносить было нечего
   }
 }
 
@@ -58,7 +94,7 @@ export function resetStoredProgress(): void {
 }
 
 /** localStorage с защитой: битый JSON уходит в резервную копию, переполнение не роняет приложение. */
-export function createSafeStorage(): StateStorage {
+export function createSafeStorage(): SyncStorage {
   if (typeof window === 'undefined' || !isLocalStorageAvailable()) return createMemoryStorage()
   return {
     getItem: (key) => {

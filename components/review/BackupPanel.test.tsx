@@ -43,6 +43,22 @@ describe('BackupPanel', () => {
     expect(screen.queryByText(/Копия заменит/)).toBeNull()
   })
 
+  it('explains that a backup made by a newer version of the site needs a reload', async () => {
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ version: 3, state: {} }))
+    render(<BackupPanel />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Восстановить' }))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Копия сделана более новой версией сайта — обнови страницу и попробуй снова.',
+    )
+  })
+
+  it('recognises a newer raw export as well as a zustand envelope', async () => {
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ version: 3, lessons: {} }))
+    render(<BackupPanel />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Восстановить' }))
+    expect(screen.getByRole('status')).toHaveTextContent(/более новой версией/)
+  })
+
   it('reports a broken backup instead of crashing', async () => {
     localStorage.setItem(BACKUP_KEY, '{oops')
     render(<BackupPanel />)
