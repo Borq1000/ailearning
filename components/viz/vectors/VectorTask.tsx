@@ -10,6 +10,8 @@ import { Stage } from '@/components/viz/stage/Stage'
 import { StageFallbackNote } from '@/components/viz/stage/StageFallbackNote'
 import { VectorInputs } from './VectorInputs'
 
+const AXIS_HINT = ['по X (вправо)', 'по Y (вверх)', 'по Z (к тебе)']
+
 export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; target: Vec; start?: Vec }) {
   const gate = useGate(id)
   const [v, setV] = useState<Vec>(start)
@@ -28,6 +30,15 @@ export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; targ
     const ok = vecEquals(v, target, 0.01)
     setWrong(!ok)
     gate.record(ok)
+  }
+
+  function revealAnswer() {
+    gate.reveal({
+      id: `vector-task:${id}`,
+      kind: 'flip',
+      prompt: `Куда указывает вектор v = ${formatVec(target)}? Назови сдвиг по каждой оси.`,
+      answer: `${target.map((x, i) => `${formatNum(x)} ${AXIS_HINT[i]}`).join(', ')}.`,
+    })
   }
 
   return (
@@ -50,7 +61,7 @@ export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; targ
             Проверить
           </button>
           {gate.attempts >= 2 && (
-            <button type="button" className="btn-ghost" onClick={() => gate.reveal()}>
+            <button type="button" className="btn-ghost" onClick={revealAnswer}>
               Показать ответ
             </button>
           )}

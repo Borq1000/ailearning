@@ -15,7 +15,7 @@ beforeEach(() => {
 })
 
 describe('Faded', () => {
-  const steps = [{ text: '2·3 =', answer: 6 }, { text: '(−1)·4 =', answer: -4 }, { text: 'Сумма готова' }]
+  const steps = [{ text: '2·3 = ▢', answer: 6 }, { text: '(−1)·4 = ▢', answer: -4 }, { text: 'Сумма готова' }]
 
   it('checks every blank and accepts a comma and a typographic minus', async () => {
     render(<Faded id="f1" steps={steps} />)
@@ -56,6 +56,11 @@ describe('Faded', () => {
     expect(first).toBeDisabled()
     expect(second).toBeDisabled()
     expect(useProgress.getState().gates.f2).toMatchObject({ passed: true, revealed: true })
+
+    const card = useProgress.getState().customCards['faded:f2']
+    expect(card).toMatchObject({ kind: 'flip', prompt: '2·3 = ▢ · (−1)·4 = ▢ · Сумма готова' })
+    expect(card.answer).toBe('2·3 = 6 · (−1)·4 = -4 · Сумма готова')
+    expect(useProgress.getState().cards['faded:f2']?.box).toBe(1)
   })
 })
 

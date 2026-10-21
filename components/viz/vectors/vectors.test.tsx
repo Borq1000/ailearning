@@ -55,6 +55,20 @@ describe('VectorTask without WebGL', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
     expect(screen.getByText(/Пока \[1, 1, 1\]/)).toBeInTheDocument()
   })
+
+  it('files the target as a review card when the answer is revealed', async () => {
+    render(<VectorTask id="vt5" target={[2, 1, 3]} start={[1, 1, 1]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
+    expect(useProgress.getState().gates.vt5).toMatchObject({ passed: true, revealed: true })
+    expect(useProgress.getState().customCards['vector-task:vt5']).toMatchObject({
+      kind: 'flip',
+      prompt: 'Куда указывает вектор v = [2, 1, 3]? Назови сдвиг по каждой оси.',
+      answer: '2 по X (вправо), 1 по Y (вверх), 3 по Z (к тебе).',
+    })
+  })
 })
 
 describe('DotProduct3D without WebGL', () => {

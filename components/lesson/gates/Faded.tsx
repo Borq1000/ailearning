@@ -27,6 +27,18 @@ export function Faded({ id, title, steps }: { id: string; title?: string; steps:
     gate.record(results.every(Boolean))
   }
 
+  /** Карточка на повторение: вопрос — шаги с пропусками, ответ — те же шаги с подставленными числами. */
+  function revealAnswers() {
+    const filled = steps.map((s) => (s.answer === undefined ? s.text : s.text.replace('▢', String(s.answer))))
+    const line = (parts: (string | undefined)[]) => parts.filter((p): p is string => Boolean(p)).join(' · ')
+    gate.reveal({
+      id: `faded:${id}`,
+      kind: 'flip',
+      prompt: line([title, ...steps.map((s) => s.text)]),
+      answer: line([title, ...filled]),
+    })
+  }
+
   return (
     <div className="gate-card" data-gate="faded" data-passed={solved}>
       <p className="gate-label m-0">Реши сам · часть шагов уже сделана</p>
@@ -64,7 +76,7 @@ export function Faded({ id, title, steps }: { id: string; title?: string; steps:
             Проверить
           </button>
           {gate.attempts >= 2 && (
-            <button type="button" className="btn-ghost" onClick={() => gate.reveal()}>
+            <button type="button" className="btn-ghost" onClick={revealAnswers}>
               Показать ответы
             </button>
           )}

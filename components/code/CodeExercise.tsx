@@ -149,7 +149,15 @@ function CodeExerciseView({ exercise }: { exercise: ExerciseDef }) {
             className="btn-ghost"
             onClick={() => {
               setShowSolution(true)
-              if (!gate.passed) gate.reveal()
+              // решение подсмотрено — задача вернётся карточкой: вопрос — условие, ответ — эталонный код
+              if (!gate.passed) {
+                gate.reveal({
+                  id: `code:${exercise.id}`,
+                  kind: 'flip',
+                  prompt: `${exercise.title}. ${exercise.prompt}`,
+                  answer: exercise.solution,
+                })
+              }
             }}
           >
             Показать решение

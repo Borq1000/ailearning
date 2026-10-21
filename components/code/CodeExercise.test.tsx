@@ -69,6 +69,10 @@ describe('CodeExercise', () => {
     await userEvent.click(runButton)
     await userEvent.click(await screen.findByRole('button', { name: 'Показать решение' }))
     expect(useProgress.getState().gates['code:dot']).toMatchObject({ passed: true, revealed: true })
+
+    const card = useProgress.getState().customCards['code:dot']
+    expect(card).toMatchObject({ kind: 'flip', prompt: 'Напиши dot(a, b). Скалярное произведение: перемножь координаты попарно и сложи результаты.' })
+    expect(card.answer).toContain('function dot(a: number[], b: number[]): number {')
   })
 
   it('explains a timeout as a probable infinite loop', async () => {

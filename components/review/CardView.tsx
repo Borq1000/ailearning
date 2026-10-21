@@ -44,7 +44,7 @@ export function CardView({ card, onAnswer }: { card: Card; onAnswer: (correct: b
         </button>
       ) : (
         <div className="mt-3">
-          <p className="m-0 rounded-lg bg-paper-deep p-3 text-sm">{card.answer}</p>
+          <p className="m-0 rounded-lg bg-paper-deep p-3 text-sm whitespace-pre-wrap">{card.answer}</p>
           {!done && (
             <div className="mt-3 flex gap-2">
               <button type="button" className="btn-primary" onClick={() => answer(true)}>
