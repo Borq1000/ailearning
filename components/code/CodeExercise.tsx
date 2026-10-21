@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 import { createContext, useContext, useRef, useState } from 'react'
 import { useGate } from '@/components/lesson/engine/useGate'
+import { useProgressKey } from '@/components/lesson/engine/useProgressKey'
 import { EXERCISES } from '@/content/attention/exercises'
 import type { ExecutionResult, ExerciseDef } from '@/lib/code/types'
 import { plural } from '@/lib/plural'
@@ -77,7 +78,8 @@ function RunReport({ result }: { result: ExecutionResult }) {
 
 function CodeExerciseView({ exercise }: { exercise: ExerciseDef }) {
   const gate = useGate(`code:${exercise.id}`)
-  const saved = useProgress((s) => s.code[exercise.id])
+  const key = useProgressKey(exercise.id)
+  const saved = useProgress((s) => s.code[key])
   const saveCode = useProgress((s) => s.saveCode)
   const run = useRunner()
   const source = saved ?? exercise.starter
@@ -121,7 +123,7 @@ function CodeExerciseView({ exercise }: { exercise: ExerciseDef }) {
         <SourceContext.Provider value={source}>
           <CodeEditor
             value={source}
-            onChange={(code) => saveCode(exercise.id, code)}
+            onChange={(code) => saveCode(key, code)}
             onRun={runTests}
             ariaLabel={`Код: ${exercise.title}`}
           />
@@ -138,7 +140,7 @@ function CodeExerciseView({ exercise }: { exercise: ExerciseDef }) {
             Подсказка ({hints + 1}/{exercise.hints.length})
           </button>
         )}
-        <button type="button" className="btn-ghost" onClick={() => saveCode(exercise.id, exercise.starter)}>
+        <button type="button" className="btn-ghost" onClick={() => saveCode(key, exercise.starter)}>
           Сбросить код
         </button>
         {failedRuns >= 3 && !showSolution && (
@@ -175,7 +177,7 @@ function CodeExerciseView({ exercise }: { exercise: ExerciseDef }) {
         <div className="mt-4">
           <p className="gate-label">Решение</p>
           <pre className="observatory overflow-x-auto p-4 font-mono text-[13px]">{exercise.solution}</pre>
-          <button type="button" className="btn-ghost mt-2" onClick={() => saveCode(exercise.id, exercise.solution)}>
+          <button type="button" className="btn-ghost mt-2" onClick={() => saveCode(key, exercise.solution)}>
             Вставить в редактор
           </button>
         </div>

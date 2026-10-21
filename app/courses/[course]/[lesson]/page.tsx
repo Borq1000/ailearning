@@ -54,9 +54,10 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
               <li key={o}>✦ {o}</li>
             ))}
           </ul>
-          <LessonStatusBadge lessonId={lesson.id} />
+          <LessonStatusBadge courseId={course.id} lessonId={lesson.id} />
         </header>
         <LessonProvider
+          courseId={course.id}
           lessonId={lesson.id}
           lessonCardIds={mod.cards.map((c) => c.id)}
           recallCards={previous.flatMap((m) => m.cards)}

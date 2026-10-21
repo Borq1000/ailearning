@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react'
 import { useProgress } from '@/lib/progress/store'
 import { useGate } from '@/components/lesson/engine/useGate'
+import { useProgressKey } from '@/components/lesson/engine/useProgressKey'
 
 const MIN_LENGTH = 20
 
@@ -15,7 +16,8 @@ export interface ExplainBackProps {
 
 export function ExplainBack({ id, prompt, reference, points }: ExplainBackProps) {
   const gate = useGate(id)
-  const text = useProgress((s) => s.explanations?.[id]) ?? ''
+  const key = useProgressKey(id)
+  const text = useProgress((s) => s.explanations?.[key]) ?? ''
   const saveExplanation = useProgress((s) => s.saveExplanation)
   const [compared, setCompared] = useState(false)
   const [checked, setChecked] = useState<boolean[]>(() => points.map(() => false))
@@ -32,7 +34,7 @@ export function ExplainBack({ id, prompt, reference, points }: ExplainBackProps)
         rows={5}
         value={text}
         placeholder="Пиши так, будто объясняешь другу…"
-        onChange={(e) => saveExplanation(id, e.target.value)}
+        onChange={(e) => saveExplanation(key, e.target.value)}
       />
 
       {!showReference && (

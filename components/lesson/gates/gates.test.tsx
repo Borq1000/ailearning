@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
+import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { Check } from './Check'
 import { ExplainBack } from './ExplainBack'
 import { Predict } from './Predict'
@@ -112,5 +113,23 @@ describe('ExplainBack', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Готово, я сравнил' }))
     expect(gates().e1.passed).toBe(true)
     expect(useProgress.getState().explanations.e1).toBe('Короткий, но настоящий ответ')
+  })
+})
+
+describe('gates inside a lesson', () => {
+  it('store their state under the course and scope the review card of a revealed answer', async () => {
+    render(
+      <LessonProvider courseId="t" lessonId="1.1" lessonCardIds={[]} recallCards={[]}>
+        <Check id="q9" question="2 + 2?" options={['3', '4']} answer={1} />
+      </LessonProvider>,
+    )
+    await userEvent.click(screen.getByRole('radio', { name: '3' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
+    expect(gates()['t/q9']).toMatchObject({ passed: true, revealed: true, attempts: 2 })
+    expect(gates().q9).toBeUndefined()
+    expect(useProgress.getState().customCards['t/check:q9']).toMatchObject({ id: 't/check:q9', correct: 1 })
+    expect(useProgress.getState().cards['t/check:q9']?.box).toBe(1)
   })
 })

@@ -8,6 +8,7 @@ import { useHydrated } from '@/lib/progress/useHydrated'
 import { CardView } from '@/components/review/CardView'
 import { useLesson } from '@/components/lesson/engine/LessonContext'
 import { useGate } from '@/components/lesson/engine/useGate'
+import { useProgressKey } from '@/components/lesson/engine/useProgressKey'
 
 interface RecallSet {
   cards: Card[]
@@ -18,6 +19,7 @@ interface RecallSet {
 export function Recall({ id }: { id: string }) {
   const { passed, pass } = useGate(id)
   const { recallCards } = useLesson()
+  const key = useProgressKey(id)
   const hydrated = useHydrated()
   const reviewCard = useProgress((s) => s.reviewCard)
   const [picked, setPicked] = useState<RecallSet | null>(null)
@@ -28,7 +30,7 @@ export function Recall({ id }: { id: string }) {
   useEffect(() => {
     if (!hydrated || picked !== null) return
     const { cards: states, customCards, gates } = useProgress.getState()
-    if (gates[id]?.passed) {
+    if (gates[key]?.passed) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- состояние зависит от localStorage и вычисляется только после гидратации
       setAlreadyDone(true)
       setPicked({ cards: [], due: new Set() })
@@ -43,7 +45,7 @@ export function Recall({ id }: { id: string }) {
       // Если подошедших карточек нет, разминка берёт любые прошлые — это тренировка, расписание она не трогает.
       due: new Set(ids.filter((cardId) => states[cardId] !== undefined && isDue(states[cardId], today))),
     })
-  }, [hydrated, picked, recallCards, id])
+  }, [hydrated, picked, recallCards, id, key])
 
   useEffect(() => {
     if (picked?.cards.length === 0 && !passed) pass()

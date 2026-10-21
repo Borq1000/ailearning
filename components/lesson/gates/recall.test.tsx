@@ -15,7 +15,7 @@ const cards: Card[] = [
 
 function renderRecall(recallCards: Card[]) {
   return render(
-    <LessonProvider lessonId="9.2" lessonCardIds={[]} recallCards={recallCards}>
+    <LessonProvider courseId="test" lessonId="9.2" lessonCardIds={[]} recallCards={recallCards}>
       <Recall id="r1" />
     </LessonProvider>,
   )
@@ -30,22 +30,22 @@ describe('Recall', () => {
   it('passes by itself when there is nothing to recall yet (deep link to an early lesson)', async () => {
     renderRecall([])
     expect(await screen.findByText(/Разминки пока нет/)).toBeInTheDocument()
-    expect(useProgress.getState().gates.r1?.passed).toBe(true)
+    expect(useProgress.getState().gates['test/r1']?.passed).toBe(true)
   })
 
   it('shows due cards and passes once all of them are answered', async () => {
     useProgress.setState({
-      cards: { 'c-a': { box: 1, due: '2000-01-01' }, 'c-b': { box: 1, due: '2000-01-01' } },
+      cards: { 'test/c-a': { box: 1, due: '2000-01-01' }, 'test/c-b': { box: 1, due: '2000-01-01' } },
     })
     renderRecall(cards)
     expect(await screen.findByText('Вопрос А')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
     await userEvent.click(screen.getByRole('button', { name: 'Помню ✓' }))
-    expect(useProgress.getState().gates.r1?.passed).toBeFalsy()
+    expect(useProgress.getState().gates['test/r1']?.passed).toBeFalsy()
     await userEvent.click(screen.getByRole('button', { name: 'да' }))
-    expect(useProgress.getState().gates.r1?.passed).toBe(true)
-    expect(useProgress.getState().cards['c-a'].box).toBe(2)
-    expect(useProgress.getState().cards['c-b'].box).toBe(2)
+    expect(useProgress.getState().gates['test/r1']?.passed).toBe(true)
+    expect(useProgress.getState().cards['test/c-a'].box).toBe(2)
+    expect(useProgress.getState().cards['test/c-b'].box).toBe(2)
   })
 
   it('falls back to earlier cards even if none were scheduled yet', async () => {
@@ -54,14 +54,14 @@ describe('Recall', () => {
   })
 
   it('treats fallback cards as practice: answering them passes the gate but schedules nothing', async () => {
-    useProgress.setState({ cards: { 'c-a': { box: 3, due: '2999-01-01' } } })
+    useProgress.setState({ cards: { 'test/c-a': { box: 3, due: '2999-01-01' } } })
     renderRecall(cards)
     await screen.findByText('Вопрос А')
     await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
     await userEvent.click(screen.getByRole('button', { name: 'Не помню ✗' }))
     await userEvent.click(screen.getByRole('button', { name: 'да' }))
-    expect(useProgress.getState().gates.r1?.passed).toBe(true)
-    expect(useProgress.getState().cards).toEqual({ 'c-a': { box: 3, due: '2999-01-01' } })
+    expect(useProgress.getState().gates['test/r1']?.passed).toBe(true)
+    expect(useProgress.getState().cards).toEqual({ 'test/c-a': { box: 3, due: '2999-01-01' } })
     expect(screen.getByText('✓ Разминка пройдена.')).toBeInTheDocument()
   })
 })
@@ -69,7 +69,7 @@ describe('Recall', () => {
 describe('Summary', () => {
   it('lists the points and says how many cards will go to the deck', () => {
     render(
-      <LessonProvider lessonId="9.3" lessonCardIds={['c-a', 'c-b']} recallCards={[]}>
+      <LessonProvider courseId="test" lessonId="9.3" lessonCardIds={['c-a', 'c-b']} recallCards={[]}>
         <Summary points={['Первый вывод', 'Второй вывод']} cards={cards} />
       </LessonProvider>,
     )

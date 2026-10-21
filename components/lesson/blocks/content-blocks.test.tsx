@@ -150,7 +150,7 @@ describe('Term', () => {
 
   it('does not link a term to the lesson the learner is reading', async () => {
     render(
-      <LessonProvider lessonId="1.3" lessonCardIds={[]} recallCards={[]}>
+      <LessonProvider courseId="attention" lessonId="1.3" lessonCardIds={[]} recallCards={[]}>
         <Term id="dot-product">скалярное произведение</Term>
       </LessonProvider>,
     )

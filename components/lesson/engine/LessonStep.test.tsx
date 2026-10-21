@@ -18,7 +18,7 @@ function FakeGate({ id }: { id: string }) {
 
 function Lesson() {
   return (
-    <LessonProvider lessonId="9.1" lessonCardIds={['c1']} recallCards={[]}>
+    <LessonProvider courseId="test" lessonId="9.1" lessonCardIds={['c1']} recallCards={[]}>
       <LessonStep index="0" total="3">
         <p>Шаг ноль</p>
       </LessonStep>
@@ -53,11 +53,11 @@ describe('LessonStep', () => {
     render(<Lesson />)
     await userEvent.click(screen.getByRole('button', { name: 'Дальше →' }))
     expect(step(1)).toHaveAttribute('data-state', 'open')
-    expect(useProgress.getState().lessons['9.1'].unlockedStep).toBe(1)
+    expect(useProgress.getState().lessons['test/9.1'].unlockedStep).toBe(1)
   })
 
   it('keeps «Дальше» disabled until every gate of the step passes', async () => {
-    useProgress.getState().unlockStep('9.1', 1)
+    useProgress.getState().unlockStep('test/9.1', 1)
     render(<Lesson />)
     const next = screen.getByRole('button', { name: 'Дальше →' })
     expect(next).toBeDisabled()
@@ -66,21 +66,21 @@ describe('LessonStep', () => {
   })
 
   it('completes the lesson on the last step and enrolls its cards', async () => {
-    useProgress.getState().unlockStep('9.1', 2)
-    useProgress.getState().recordAttempt('g1', true)
+    useProgress.getState().unlockStep('test/9.1', 2)
+    useProgress.getState().recordAttempt('test/g1', true)
     render(<Lesson />)
     await userEvent.click(screen.getByRole('button', { name: 'Завершить урок ✓' }))
-    expect(useProgress.getState().lessons['9.1'].status).toBe('completed')
-    expect(useProgress.getState().cards.c1?.box).toBe(1)
+    expect(useProgress.getState().lessons['test/9.1'].status).toBe('completed')
+    expect(useProgress.getState().cards['test/c1']?.box).toBe(1)
   })
 
   it('still offers «Завершить урок» when the saved step is past the last one (e.g. a step was removed)', async () => {
-    useProgress.getState().unlockStep('9.1', 5)
-    useProgress.getState().recordAttempt('g1', true)
+    useProgress.getState().unlockStep('test/9.1', 5)
+    useProgress.getState().recordAttempt('test/g1', true)
     render(<Lesson />)
     for (const i of [0, 1, 2]) expect(step(i)).toHaveAttribute('data-state', 'open')
     await userEvent.click(screen.getByRole('button', { name: 'Завершить урок ✓' }))
-    expect(useProgress.getState().lessons['9.1'].status).toBe('completed')
+    expect(useProgress.getState().lessons['test/9.1'].status).toBe('completed')
   })
 
   it('moves focus to the newly opened step after «Дальше»', async () => {
@@ -112,7 +112,7 @@ describe('LessonStep', () => {
   }
 
   it('opens every step of a completed lesson and shows no step buttons', () => {
-    useProgress.getState().completeLesson('9.1', [], '2026-10-20')
+    useProgress.getState().completeLesson('test/9.1', [], '2026-10-20')
     render(<Lesson />)
     for (const i of [0, 1, 2]) expect(step(i)).toHaveAttribute('data-state', 'open')
     expect(screen.queryByRole('button', { name: 'Дальше →' })).toBeNull()

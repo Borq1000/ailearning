@@ -10,9 +10,9 @@ import { StepContext } from './StepContext'
 export function LessonStep({ index, total, children }: { index: string; total: string; children?: ReactNode }) {
   const i = Number(index)
   const n = Number(total)
-  const { lessonId, lessonCardIds } = useLesson()
+  const { lessonKey, lessonCardKeys } = useLesson()
   const hydrated = useHydrated()
-  const lesson = useProgress((s) => s.lessons[lessonId])
+  const lesson = useProgress((s) => s.lessons[lessonKey])
   const gates = useProgress((s) => s.gates)
   const unlockStep = useProgress((s) => s.unlockStep)
   const completeLesson = useProgress((s) => s.completeLesson)
@@ -36,7 +36,7 @@ export function LessonStep({ index, total, children }: { index: string; total: s
   const isLast = i === n - 1
 
   function goNext() {
-    unlockStep(lessonId, i + 1)
+    unlockStep(lessonKey, i + 1)
     requestAnimationFrame(() => {
       const next = document.querySelector<HTMLElement>(`[data-step="${i + 1}"]`)
       if (!next) return
@@ -82,7 +82,7 @@ export function LessonStep({ index, total, children }: { index: string; total: s
                 type="button"
                 className="btn-primary"
                 disabled={!allPassed}
-                onClick={() => completeLesson(lessonId, lessonCardIds, todayISO())}
+                onClick={() => completeLesson(lessonKey, lessonCardKeys, todayISO())}
               >
                 Завершить урок ✓
               </button>

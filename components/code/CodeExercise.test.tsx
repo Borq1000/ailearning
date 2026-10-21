@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
+import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { CodeExercise } from './CodeExercise'
 
 const { run } = vi.hoisted(() => ({ run: vi.fn() }))
@@ -105,5 +106,21 @@ describe('CodeExercise', () => {
     finish(red)
     expect(await screen.findByText('ожидалось 32, получено 0')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '▶ Запустить тесты' })).toBeEnabled()
+  })
+
+  it('stores code and the gate under the course inside a lesson', async () => {
+    run.mockResolvedValue(green)
+    render(
+      <LessonProvider courseId="t" lessonId="1.3" lessonCardIds={[]} recallCards={[]}>
+        <CodeExercise id="dot" />
+      </LessonProvider>,
+    )
+    const editor = await screen.findByRole('textbox', { name: 'Код: Напиши dot(a, b)' })
+    await userEvent.clear(editor)
+    await userEvent.type(editor, 'y')
+    expect(useProgress.getState().code['t/dot']).toBe('y')
+    await userEvent.click(screen.getByRole('button', { name: '▶ Запустить тесты' }))
+    await screen.findByText('1 из 1 теста пройдено')
+    expect(useProgress.getState().gates['t/code:dot'].passed).toBe(true)
   })
 })

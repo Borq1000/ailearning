@@ -6,8 +6,8 @@ import { useProgress } from '@/lib/progress/store'
 import { useLesson } from '@/components/lesson/engine/LessonContext'
 
 export function Summary({ points, cards }: { points: string[]; cards: Card[] }) {
-  const { lessonId } = useLesson()
-  const completed = useProgress((s) => s.lessons[lessonId]?.status === 'completed')
+  const { lessonKey } = useLesson()
+  const completed = useProgress((s) => s.lessons[lessonKey]?.status === 'completed')
   const n = cards.length
 
   return (
