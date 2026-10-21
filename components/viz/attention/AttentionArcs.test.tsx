@@ -16,13 +16,28 @@ describe('arcPath', () => {
 describe('AttentionArcs', () => {
   it('says where «он» looks and updates when the adjective changes', async () => {
     render(<AttentionArcs />)
-    expect(screen.getByRole('img')).toHaveAccessibleName(/«забор»/)
+    expect(screen.getByRole('group', { name: /«забор»/ })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('radio', { name: 'уставшим' }))
-    expect(screen.getByRole('img')).toHaveAccessibleName(/«кот»/)
+    expect(screen.getByRole('group', { name: /«кот»/ })).toBeInTheDocument()
   })
 
   it('draws one arc from «он» to every other word', () => {
     const { container } = render(<AttentionArcs />)
     expect(container.querySelectorAll('path')).toHaveLength(10)
+  })
+
+  it('names every other word with its share for keyboard and screen-reader users', () => {
+    render(<AttentionArcs />)
+    expect(screen.getAllByRole('button', { name: /% внимания$/ })).toHaveLength(10)
+  })
+
+  it('opens a card with the weight when a word is clicked and closes it again', async () => {
+    render(<AttentionArcs />)
+    await userEvent.click(screen.getByRole('button', { name: /^забор: / }))
+    const card = screen.getByRole('dialog', { name: 'он → забор' })
+    expect(card).toHaveTextContent(/% внимания/)
+    expect(card).toHaveTextContent(/Самая толстая дуга/)
+    await userEvent.click(screen.getByRole('button', { name: 'Закрыть' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })

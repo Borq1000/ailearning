@@ -45,8 +45,8 @@ export function DotProduct3D({
     >
       <LazyVectorScene
         vectors={[
-          { id: 'a', value: a, color: CONCEPTS.a.glow, label: 'a', draggable: true },
-          { id: 'b', value: b, color: CONCEPTS.b.glow, label: 'b', draggable: true },
+          { id: 'a', value: a, color: CONCEPTS.a.glow, label: 'a', draggable: true, concept: 'a' },
+          { id: 'b', value: b, color: CONCEPTS.b.glow, label: 'b', draggable: true, concept: 'b' },
         ]}
         onChange={(id, v) => (id === 'a' ? setA(v) : setB(v))}
         arc={points ? { points, color } : null}

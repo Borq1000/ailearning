@@ -33,6 +33,7 @@ export function VectorSpace3D({ initial = [2, 1, 2], label = 'v', caption }: { i
             color,
             label,
             draggable: true,
+            concept: 'a',
             info: {
               title: `Вектор ${label}`,
               body: `${formatVec(v)}: ${formatNum(v[0])} по X, ${formatNum(v[1])} по Y, ${formatNum(v[2])} по Z.`,

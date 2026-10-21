@@ -197,6 +197,10 @@
   .concept {
     @apply border-b-2 font-semibold;
   }
+  .concept[data-active='true'] {
+    border-radius: 3px;
+    background-color: color-mix(in srgb, var(--concept-glow) 22%, transparent);
+  }
   .sidenote {
     @apply my-4 block border-l-2 border-line pl-3 text-sm leading-relaxed text-muted italic;
   }

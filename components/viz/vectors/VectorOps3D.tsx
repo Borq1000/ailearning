@@ -32,14 +32,15 @@ export function VectorOps3D({
   if (mode === 'add') {
     const sum = add(a, b)
     const vectors: VectorSpec[] = [
-      { id: 'a', value: a, color: A, label: 'a', draggable: true },
-      { id: 'b', value: b, color: B, label: 'b', draggable: true },
-      { id: 'b-moved', value: b, from: a, color: B, label: '' },
+      { id: 'a', value: a, color: A, label: 'a', draggable: true, concept: 'a' },
+      { id: 'b', value: b, color: B, label: 'b', draggable: true, concept: 'b' },
+      { id: 'b-moved', value: b, from: a, color: B, label: '', concept: 'b' },
       {
         id: 'sum',
         value: sum,
         color: R,
         label: 'a + b',
+        concept: 'result',
         info: { title: 'Сумма a + b', body: `Пройди по a, потом по b — окажешься в ${formatVec(sum)}.` },
       },
     ]
@@ -91,8 +92,8 @@ export function VectorOps3D({
     >
       <LazyVectorScene
         vectors={[
-          { id: 'a', value: a, color: A, label: 'a', draggable: true },
-          { id: 'ka', value: scaled, color: R, label: `${formatNum(k)}·a` },
+          { id: 'a', value: a, color: A, label: 'a', draggable: true, concept: 'a' },
+          { id: 'ka', value: scaled, color: R, label: `${formatNum(k)}·a`, concept: 'result' },
         ]}
         onChange={(_, v) => setA(v)}
       />

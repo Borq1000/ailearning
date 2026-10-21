@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { ADJECTIVE, pronounAttention, type Variant } from '@/content/attention/toy-model'
 import { CONCEPTS } from '@/lib/theme/concepts'
+import { InfoCard } from '@/components/viz/stage/InfoCard'
 import { Observatory } from '@/components/viz/stage/Observatory'
 
 const CHAR = 9.4
@@ -27,6 +28,7 @@ export function AttentionArcs({
 }) {
   const [variant, setVariant] = useState<Variant>(initial)
   const [hovered, setHovered] = useState<number | null>(null)
+  const [selected, setSelected] = useState<number | null>(null)
   const { tokens, weights, target } = useMemo(() => pronounAttention(variant), [variant])
 
   const focus = tokens.indexOf('он')
@@ -34,6 +36,12 @@ export function AttentionArcs({
   const xs = widths.map((w, i) => widths.slice(0, i).reduce((s, x) => s + x, 0) + w / 2)
   const width = widths.reduce((s, w) => s + w, 0)
   const label = `«он» сильнее всего смотрит на «${target}» — ${percent(weights[tokens.indexOf(target)])} внимания`
+  // процент виден у слова под курсором, у выбранного слова и у всех — если так попросил урок
+  const shown = hovered ?? selected
+
+  function select(i: number) {
+    setSelected((current) => (current === i ? null : i))
+  }
 
   const footer = (
     <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Конец фразы">
@@ -46,19 +54,22 @@ export function AttentionArcs({
           aria-checked={variant === v}
           className="stage-chip"
           data-active={variant === v}
-          onClick={() => setVariant(v)}
+          onClick={() => {
+            setVariant(v)
+            setSelected(null)
+          }}
         >
           {ADJECTIVE[v]}
         </button>
       ))}
-      <span className="ml-auto font-mono text-xs text-space-muted">наведи на слово — увидишь %</span>
+      <span className="ml-auto font-mono text-xs text-space-muted">нажми на слово — увидишь %</span>
     </div>
   )
 
   return (
     <Observatory wide caption={caption} footer={footer}>
       <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${width} 230`} role="img" aria-label={label} className="block w-full min-w-[640px] px-2">
+        <svg viewBox={`0 0 ${width} 230`} role="group" aria-label={label} className="block w-full min-w-[640px] px-2">
           {tokens.map((token, i) =>
             i === focus ? null : (
               <path
@@ -69,35 +80,72 @@ export function AttentionArcs({
                 stroke={token === target ? CONCEPTS.target.glow : CONCEPTS.focus.glow}
                 style={{
                   strokeWidth: 1 + weights[i] * 14,
-                  opacity: hovered === null || hovered === i ? 0.3 + weights[i] * 0.7 : 0.1,
+                  opacity: shown === null || shown === i ? 0.3 + weights[i] * 0.7 : 0.1,
                   transition: 'stroke-width 0.6s ease, opacity 0.3s ease',
                 }}
               />
             ),
           )}
-          {tokens.map((token, i) => (
-            <g key={i} onPointerEnter={() => setHovered(i)} onPointerLeave={() => setHovered(null)}>
-              <text
-                x={xs[i]}
-                y={BASELINE}
-                textAnchor="middle"
-                fontSize="15"
-                className="font-mono"
-                fontWeight={i === focus || token === target ? 700 : 400}
-                fill={i === focus ? CONCEPTS.focus.glow : token === target ? CONCEPTS.target.glow : '#dbe6ff'}
-                opacity={i === focus || weights[i] > 0.05 ? 1 : 0.55}
+          {tokens.map((token, i) => {
+            const word = i !== focus
+            return (
+              <g
+                key={i}
+                role={word ? 'button' : undefined}
+                tabIndex={word ? 0 : undefined}
+                aria-label={word ? `${token}: ${percent(weights[i])} внимания` : undefined}
+                aria-pressed={word ? selected === i : undefined}
+                className={word ? 'cursor-pointer outline-none' : undefined}
+                onPointerEnter={() => setHovered(i)}
+                onPointerLeave={() => setHovered(null)}
+                onClick={() => word && select(i)}
+                onKeyDown={(e) => {
+                  if (word && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    select(i)
+                  }
+                }}
               >
-                {token}
-              </text>
-              {(showWeights || hovered === i) && i !== focus && (
-                <text x={xs[i]} y={BASELINE + 24} textAnchor="middle" fontSize="12" fill="#7c8db5" className="font-mono">
-                  {percent(weights[i])}
+                <text
+                  x={xs[i]}
+                  y={BASELINE}
+                  textAnchor="middle"
+                  fontSize="15"
+                  className="font-mono"
+                  fontWeight={i === focus || token === target ? 700 : 400}
+                  fill={i === focus ? CONCEPTS.focus.glow : token === target ? CONCEPTS.target.glow : '#dbe6ff'}
+                  opacity={i === focus || weights[i] > 0.05 ? 1 : 0.55}
+                  textDecoration={selected === i ? 'underline' : undefined}
+                >
+                  {token}
                 </text>
-              )}
-            </g>
-          ))}
+                {(showWeights || shown === i) && word && (
+                  <text x={xs[i]} y={BASELINE + 24} textAnchor="middle" fontSize="12" fill="#7c8db5" className="font-mono">
+                    {percent(weights[i])}
+                  </text>
+                )}
+              </g>
+            )
+          })}
         </svg>
       </div>
+      {selected !== null && selected !== focus && (
+        <InfoCard
+          info={{
+            title: `он → ${tokens[selected]}`,
+            body: (
+              <>
+                {percent(weights[selected])} внимания.{' '}
+                {tokens[selected] === target
+                  ? 'Самая толстая дуга: именно это слово объясняет, кто такой «он».'
+                  : 'Слабая связь: это слово мало говорит о том, кто такой «он».'}{' '}
+                В уроке 3.3 ты посчитаешь это число сам.
+              </>
+            ),
+          }}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </Observatory>
   )
 }

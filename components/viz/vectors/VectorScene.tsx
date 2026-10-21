@@ -3,6 +3,8 @@
 import { Html, Line } from '@react-three/drei'
 import type { ReactNode } from 'react'
 import { add, sub, type Vec } from '@/lib/math'
+import type { ConceptKey } from '@/lib/theme/concepts'
+import { useHighlight } from '@/lib/viz/highlight'
 import { formatVec } from '@/lib/viz/vector-helpers'
 import { useStageInfo, type StageInfo } from '@/components/viz/stage/stage-context'
 import { Arrow3D, pad3 } from './three/Arrow3D'
@@ -17,6 +19,8 @@ export interface VectorSpec {
   /** Начало стрелки (по умолчанию — начало координат). */
   from?: Vec
   draggable?: boolean
+  /** Понятие, чьи термины <C> подсвечивать при наведении. */
+  concept?: ConceptKey
   info?: StageInfo
 }
 
@@ -32,6 +36,8 @@ export function VectorScene({
   children?: ReactNode
 }) {
   const info = useStageInfo()
+  const highlight = useHighlight((s) => s.highlight)
+  const release = useHighlight((s) => s.release)
   return (
     <>
       <Axes3D />
@@ -39,7 +45,11 @@ export function VectorScene({
         const from = v.from ?? [0, 0, 0]
         const tip = add(from, v.value)
         return (
-          <group key={v.id}>
+          <group
+            key={v.id}
+            onPointerOver={() => v.concept && highlight(v.concept)}
+            onPointerOut={() => v.concept && release(v.concept)}
+          >
             <Arrow3D
               from={from}
               to={tip}

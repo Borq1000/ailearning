@@ -1,11 +1,13 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GLOSSARY } from '@/content/glossary'
 import { emptyProgress } from '@/lib/progress/migrate'
 import { useProgress } from '@/lib/progress/store'
 import { LessonProvider } from '@/components/lesson/engine/LessonContext'
+import { useHighlight } from '@/lib/viz/highlight'
 import { Faded } from '@/components/lesson/gates/Faded'
+import { C } from './C'
 import { Level, Levels } from './Levels'
 import { Term } from './Term'
 import { WorkedExample } from './WorkedExample'
@@ -168,5 +170,19 @@ describe('Term', () => {
     render(<Term id="nope">слово</Term>)
     expect(screen.queryByRole('button')).toBeNull()
     expect(screen.getByText('слово')).toBeInTheDocument()
+  })
+})
+
+describe('C', () => {
+  it('lights up while its concept is hovered in a scene and only its own release turns it off', () => {
+    render(<C k="a">a</C>)
+    const term = screen.getByText('a')
+    expect(term).toHaveAttribute('data-active', 'false')
+    act(() => useHighlight.getState().highlight('a'))
+    expect(term).toHaveAttribute('data-active', 'true')
+    act(() => useHighlight.getState().release('b'))
+    expect(term).toHaveAttribute('data-active', 'true')
+    act(() => useHighlight.getState().release('a'))
+    expect(term).toHaveAttribute('data-active', 'false')
   })
 })
