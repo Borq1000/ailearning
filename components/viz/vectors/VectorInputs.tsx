@@ -1,59 +1,10 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment } from 'react'
 import type { Vec } from '@/lib/math'
-import { parseNumber } from '@/lib/parse-number'
-import { BOUND, formatNum } from '@/lib/viz/vector-helpers'
+import { NumberField } from '@/components/viz/stage/NumberField'
 
 const AXIS_NAMES = ['x', 'y', 'z']
-
-function NumberField({
-  value,
-  label,
-  disabled,
-  onCommit,
-}: {
-  value: number
-  label: string
-  disabled?: boolean
-  onCommit: (n: number) => void
-}) {
-  const [text, setText] = useState('')
-  const [focused, setFocused] = useState(false)
-
-  function commit() {
-    const parsed = parseNumber(text)
-    if (parsed === null) return
-    const clamped = Math.max(-BOUND, Math.min(BOUND, parsed))
-    onCommit(clamped)
-    setText(formatNum(clamped))
-  }
-
-  return (
-    <input
-      type="text"
-      inputMode="text"
-      autoComplete="off"
-      spellCheck={false}
-      aria-label={label}
-      className="stage-input"
-      disabled={disabled}
-      value={focused ? text : formatNum(value)}
-      onFocus={() => {
-        setText(formatNum(value))
-        setFocused(true)
-      }}
-      onBlur={() => {
-        commit()
-        setFocused(false)
-      }}
-      onChange={(e) => setText(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') commit()
-      }}
-    />
-  )
-}
 
 export function VectorInputs({
   label,

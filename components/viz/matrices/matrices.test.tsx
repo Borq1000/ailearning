@@ -1,0 +1,51 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
+import { MatrixTransform3D } from './MatrixTransform3D'
+
+async function setField(name: string, value: string) {
+  const field = screen.getByRole('textbox', { name })
+  await userEvent.clear(field)
+  await userEvent.type(field, `${value}{Enter}`)
+}
+
+const readout = () => screen.getByText(/^M·v =/)
+
+describe('MatrixTransform3D without WebGL', () => {
+  it('shows M·v for the identity and recomputes after a preset', async () => {
+    render(<MatrixTransform3D vector={[1, 0.5, 1]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    expect(readout()).toHaveTextContent('M·v = [1, 0.5, 1]')
+    await userEvent.click(screen.getByRole('button', { name: 'растянуть X ×2' }))
+    expect(readout()).toHaveTextContent('M·v = [2, 0.5, 1]')
+    expect(screen.getByRole('button', { name: 'растянуть X ×2' })).toHaveAttribute('data-active', 'true')
+    expect(screen.getByText('Первая координата удваивается, остальные не меняются.')).toBeInTheDocument()
+  })
+
+  it('recomputes when a matrix entry is edited, accepting a comma and clamping to the bound', async () => {
+    render(<MatrixTransform3D vector={[1, 0.5, 1]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    await setField('M, строка 1, столбец 1', '1,5')
+    expect(readout()).toHaveTextContent('M·v = [1.5, 0.5, 1]')
+    await setField('M, строка 2, столбец 2', '9')
+    expect(screen.getByRole('textbox', { name: 'M, строка 2, столбец 2' })).toHaveValue('3')
+    expect(readout()).toHaveTextContent('M·v = [1.5, 1.5, 1]')
+    // матрица больше не совпадает ни с одним пресетом — ни одна кнопка не активна
+    expect(screen.getByRole('button', { name: 'как было' })).toHaveAttribute('data-active', 'false')
+  })
+
+  it('ignores text that is not a number', async () => {
+    render(<MatrixTransform3D vector={[1, 0.5, 1]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    await setField('M, строка 3, столбец 3', 'abc')
+    expect(readout()).toHaveTextContent('M·v = [1, 0.5, 1]')
+  })
+
+  it('lists one dot product per row and lets the input vector be edited too', async () => {
+    render(<MatrixTransform3D vector={[1, 2, 3]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    expect(screen.getByText(/строка 1:/)).toHaveTextContent('[1, 0, 0]·[1, 2, 3] = 1')
+    await setField('v, координата z', '0')
+    expect(readout()).toHaveTextContent('M·v = [1, 2, 0]')
+  })
+})
