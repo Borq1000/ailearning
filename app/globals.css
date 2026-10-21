@@ -281,6 +281,13 @@
   .mat-cell-btn[aria-pressed='true'] {
     @apply font-semibold text-glow-lime;
   }
+  /* ── столбики softmax ────────────────────────── */
+  .bar-track {
+    @apply block h-3 w-full overflow-hidden rounded bg-white/5;
+  }
+  .bar-fill {
+    @apply block h-full rounded transition-[width] duration-300;
+  }
   .code-editor {
     @apply overflow-hidden rounded-lg border border-white/10 text-[13px];
   }

@@ -1,0 +1,44 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
+import { SoftmaxBars } from './SoftmaxBars'
+
+const readout = () => screen.getByText(/^softmax =/)
+
+describe('SoftmaxBars', () => {
+  it('turns scores into shares that sum to 1 and shows every stage', () => {
+    render(<SoftmaxBars initial={[2, 1, 0.1]} labels={['забор', 'кот', 'через']} />)
+    expect(readout()).toHaveTextContent('softmax = [0.66, 0.24, 0.1] · сумма = 1')
+    expect(screen.getByText('66%')).toBeInTheDocument()
+    expect(screen.getByText('7.39')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'оценка забор' })).toHaveValue('2')
+  })
+
+  it('does not change the shares when 10 is added to every score', async () => {
+    render(<SoftmaxBars initial={[2, 1, 0.1]} />)
+    await userEvent.click(screen.getByRole('button', { name: '+10 ко всем' }))
+    expect(screen.getByRole('textbox', { name: 'оценка x1' })).toHaveValue('12')
+    expect(readout()).toHaveTextContent('softmax = [0.66, 0.24, 0.1]')
+  })
+
+  it('sharpens with a lower temperature and survives huge scores without NaN', async () => {
+    render(<SoftmaxBars initial={[2, 1, 0.1]} />)
+    fireEvent.change(screen.getByRole('slider', { name: 'Температура' }), { target: { value: '0.5' } })
+    expect(readout()).toHaveTextContent('softmax = [0.86, 0.12, 0.02]')
+    const field = screen.getByRole('textbox', { name: 'оценка x1' })
+    await userEvent.clear(field)
+    await userEvent.type(field, '1000{Enter}')
+    expect(field).toHaveValue('50')
+    expect(readout()).toHaveTextContent('softmax = [1, 0, 0]')
+    expect(readout()).not.toHaveTextContent('NaN')
+  })
+
+  it('resets scores and temperature', async () => {
+    render(<SoftmaxBars initial={[2, 1, 0.1]} />)
+    await userEvent.click(screen.getByRole('button', { name: '+10 ко всем' }))
+    fireEvent.change(screen.getByRole('slider', { name: 'Температура' }), { target: { value: '3' } })
+    await userEvent.click(screen.getByRole('button', { name: 'сбросить' }))
+    expect(screen.getByRole('textbox', { name: 'оценка x1' })).toHaveValue('2')
+    expect(screen.getByRole('slider', { name: 'Температура' })).toHaveValue('1')
+  })
+})
