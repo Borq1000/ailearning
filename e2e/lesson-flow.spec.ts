@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const READY = ['0-1-riddle', '0-2-journey-map', '1-1-vector', '1-2-vector-ops', '1-3-dot-product', '1-4-matrix', '1-5-matmul', '1-6-softmax']
+const READY = ['0-1-riddle', '0-2-journey-map', '1-1-vector', '1-2-vector-ops', '1-3-dot-product', '1-4-matrix', '1-5-matmul', '1-6-softmax', '1-p-practice']
 
 test('lesson 0.1 is walked step by step and remembers progress after reload', async ({ page }) => {
   const errors: string[] = []
