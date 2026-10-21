@@ -95,7 +95,7 @@ export function AttentionArcs({
                 tabIndex={word ? 0 : undefined}
                 aria-label={word ? `${token}: ${percent(weights[i])} внимания` : undefined}
                 aria-pressed={word ? selected === i : undefined}
-                className={word ? 'cursor-pointer outline-none' : undefined}
+                className={word ? 'attn-word cursor-pointer outline-none' : undefined}
                 onPointerEnter={() => setHovered(i)}
                 onPointerLeave={() => setHovered(null)}
                 onClick={() => word && select(i)}
@@ -106,6 +106,17 @@ export function AttentionArcs({
                   }
                 }}
               >
+                {word && (
+                  <rect
+                    className="attn-focus"
+                    x={xs[i] - widths[i] / 2 + 2}
+                    y={BASELINE - 20}
+                    width={widths[i] - 4}
+                    height={30}
+                    rx={6}
+                    fill="none"
+                  />
+                )}
                 <text
                   x={xs[i]}
                   y={BASELINE}

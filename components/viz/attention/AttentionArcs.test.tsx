@@ -40,4 +40,18 @@ describe('AttentionArcs', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Закрыть' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
+
+  it('is operable from the keyboard: Tab reaches a word, Enter opens and closes its card', async () => {
+    render(<AttentionArcs />)
+    await userEvent.tab()
+    const word = screen.getAllByRole('button', { name: /% внимания$/ })[0]
+    expect(word).toHaveFocus()
+    expect(word).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.keyboard('{Enter}')
+    expect(word).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('dialog', { name: /^он → / })).toBeInTheDocument()
+    await userEvent.keyboard('{Enter}')
+    expect(word).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
 })

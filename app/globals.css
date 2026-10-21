@@ -231,6 +231,14 @@
   .stage-chip[data-active='true'] {
     @apply border-glow-cyan bg-glow-cyan/15 text-glow-cyan;
   }
+  /* слова в дугах внимания: рамка видна только при фокусе с клавиатуры */
+  .attn-focus {
+    stroke: transparent;
+    stroke-width: 1.5px;
+  }
+  .attn-word:focus-visible .attn-focus {
+    stroke: var(--color-glow-cyan);
+  }
   .stage-fallback {
     @apply flex h-full flex-col justify-center gap-3 p-6 text-sm text-space-muted;
   }
