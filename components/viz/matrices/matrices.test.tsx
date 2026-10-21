@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { CONCEPTS } from '@/lib/theme/concepts'
 import { MatMulExplorer } from './MatMulExplorer'
+import { COLUMN_COLORS } from './MatrixScene'
 import { MatrixTransform3D } from './MatrixTransform3D'
 
 async function setField(name: string, value: string) {
@@ -48,6 +50,14 @@ describe('MatrixTransform3D without WebGL', () => {
     expect(screen.getByText(/строка 1:/)).toHaveTextContent('[1, 0, 0]·[1, 2, 3] = 1')
     await setField('v, координата z', '0')
     expect(readout()).toHaveTextContent('M·v = [1, 2, 0]')
+  })
+})
+
+describe('MatrixScene colors', () => {
+  it('draws the column arrows X′, Y′, Z′ in colors that no concept uses', () => {
+    const conceptColors = Object.values(CONCEPTS).flatMap((c) => [c.glow, c.ink])
+    expect(COLUMN_COLORS).toEqual(['#f87171', '#fde047', '#f472b6'])
+    for (const color of COLUMN_COLORS) expect(conceptColors).not.toContain(color)
   })
 })
 

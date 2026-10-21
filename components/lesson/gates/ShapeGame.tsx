@@ -24,7 +24,10 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
   const [round, setRound] = useState(0)
   const [wrong, setWrong] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState<string | null>(null)
+  // игру закончили на этой странице (а не загрузили пройденной из хранилища): итог объявляем и переводим на него фокус
+  const [finishedHere, setFinishedHere] = useState(false)
   const optionsRef = useRef<HTMLDivElement>(null)
+  const resultRef = useRef<HTMLDivElement>(null)
   const finished = gate.passed
   const current = rounds[Math.min(round, rounds.length - 1)]
   // порядок вариантов перемешан детерминированно: правильный ответ не стоит всегда первым
@@ -37,6 +40,11 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
     if (round > 0) optionsRef.current?.querySelector('button')?.focus()
   }, [round])
 
+  // кнопки игры исчезают вместе с последним раундом: фокус уходит на итог
+  useEffect(() => {
+    if (finished && finishedHere) resultRef.current?.focus()
+  }, [finished, finishedHere])
+
   function choose(option: string) {
     if (finished) return
     setConfirmed(null)
@@ -47,6 +55,7 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
     }
     setWrong(null)
     if (round + 1 >= rounds.length) {
+      setFinishedHere(true)
       gate.record(true)
       return
     }
@@ -57,6 +66,7 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
   }
 
   function showRule() {
+    setFinishedHere(true)
     gate.reveal({
       id: `shape-game:${id}`,
       kind: 'flip',
@@ -64,6 +74,12 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
       answer: RULE,
     })
   }
+
+  const resultText = (
+    <p className="m-0">
+      {gate.revealed ? `Правило: ${RULE} Этот вопрос вернётся к тебе на повторении.` : '✓ Все раунды пройдены!'}
+    </p>
+  )
 
   return (
     <div className="gate-card" data-gate="shape-game" data-passed={finished}>
@@ -86,30 +102,30 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
               </button>
             ))}
           </div>
-          <div role="status">
-            {confirmed && <p className="feedback-right">{confirmed}</p>}
-            {wrong && (
-              <p className="feedback-wrong">
-                Не то. Внутренние размеры: у A {current.a[1]} {plural(current.a[1], ['столбец', 'столбца', 'столбцов'])}, у B{' '}
-                {current.b[0]} {plural(current.b[0], ['строка', 'строки', 'строк'])}.{' '}
-                {inner
-                  ? 'Они совпали — значит, перемножить можно, а остаются внешние размеры.'
-                  : 'Они не совпали — скалярному произведению строки на столбец не сойтись.'}
-              </p>
-            )}
-          </div>
-          {gate.attempts >= 2 && (
-            <button type="button" className="btn-ghost mt-3" onClick={showRule}>
-              Показать правило
-            </button>
-          )}
         </>
       )}
-      {finished && (
-        <div role="status" className="feedback-right">
-          <p className="m-0">
-            {gate.revealed ? `Правило: ${RULE} Этот вопрос вернётся к тебе на повторении.` : '✓ Все раунды пройдены!'}
-          </p>
+      {/* Одна живая область на всю игру: ошибки, «✓ Верно…» и итог объявляются через неё. */}
+      <div
+        ref={resultRef}
+        data-finished={finished || undefined}
+        tabIndex={finished ? -1 : undefined}
+        className={finished ? 'feedback-right focus:outline-none' : undefined}
+      >
+        <div role="status">
+          {!finished && confirmed && <p className="feedback-right">{confirmed}</p>}
+          {!finished && wrong && (
+            <p className="feedback-wrong">
+              Не то. Внутренние размеры: у A {current.a[1]} {plural(current.a[1], ['столбец', 'столбца', 'столбцов'])}, у B{' '}
+              {current.b[0]} {plural(current.b[0], ['строка', 'строки', 'строк'])}.{' '}
+              {inner
+                ? 'Они совпали — значит, перемножить можно, а остаются внешние размеры.'
+                : 'Они не совпали — скалярному произведению строки на столбец не сойтись.'}
+            </p>
+          )}
+          {finished && finishedHere && resultText}
+        </div>
+        {finished && !finishedHere && resultText}
+        {finished && (
           <ul className="mt-2 mb-0 list-none p-0 font-mono text-[13px]">
             {rounds.map((r, i) => (
               <li key={i}>
@@ -117,7 +133,12 @@ export function ShapeGame({ id, rounds }: { id: string; rounds: ShapeRound[] }) 
               </li>
             ))}
           </ul>
-        </div>
+        )}
+      </div>
+      {!finished && gate.attempts >= 2 && (
+        <button type="button" className="btn-ghost mt-3" onClick={showRule}>
+          Показать правило
+        </button>
       )}
     </div>
   )

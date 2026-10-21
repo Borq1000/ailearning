@@ -97,7 +97,8 @@ describe('course content integrity', () => {
   })
 
   it('uses unique gate ids and card ids across the course', async () => {
-    // Progress is keyed by the bare id (useProgress.gates[id]); CodeExercise stores `code:${id}`.
+    // Ids must be unique within a course: progress keys only add the course prefix (scopeId → `attention/<id>`),
+    // so two gates with one id would share a record. CodeExercise stores `code:${id}`.
     const stored: string[] = []
     const labelled: string[] = []
     const cardIds: string[] = []

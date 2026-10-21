@@ -60,9 +60,19 @@ describe('Faded', () => {
     expect(useProgress.getState().gates.f2).toMatchObject({ passed: true, revealed: true })
 
     const card = useProgress.getState().customCards['faded:f2']
-    expect(card).toMatchObject({ kind: 'flip', prompt: '2·3 = ▢ · (−1)·4 = ▢ · Сумма готова' })
-    expect(card.answer).toBe('2·3 = 6 · (−1)·4 = -4 · Сумма готова')
+    expect(card).toMatchObject({ kind: 'flip', prompt: '2·3 = ▢\n(−1)·4 = ▢\nСумма готова' })
+    expect(card.answer).toBe('2·3 = 6\n(−1)·4 = -4\nСумма готова')
     expect(useProgress.getState().cards['faded:f2']?.box).toBe(1)
+  })
+
+  it('puts the title and every step of the review card on its own line (a dot would read as multiplication)', async () => {
+    render(<Faded id="f3" title="Посчитай [1, 2] · [3, 4]" steps={steps} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответы' }))
+    const card = useProgress.getState().customCards['faded:f3']
+    expect(card.prompt).toBe('Посчитай [1, 2] · [3, 4]\n2·3 = ▢\n(−1)·4 = ▢\nСумма готова')
+    expect(card.answer).toBe('Посчитай [1, 2] · [3, 4]\n2·3 = 6\n(−1)·4 = -4\nСумма готова')
   })
 })
 

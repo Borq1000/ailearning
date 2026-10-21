@@ -55,10 +55,35 @@ describe('ShapeGame', () => {
     expect(screen.getByText(/Правило:/)).toBeInTheDocument()
   })
 
-  it('shows the finished view after a reload', () => {
+  it('shows the finished view after a reload without announcing it or moving focus', () => {
     useProgress.getState().recordAttempt('sg3', true)
     render(<ShapeGame id="sg3" rounds={rounds} />)
     expect(screen.getByText(/Все раунды пройдены/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '2×4' })).toBeNull()
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+    expect(document.body).toHaveFocus()
+  })
+
+  it('announces the finish in its single live region and moves focus to the finished block', async () => {
+    render(<ShapeGame id="sg6" rounds={rounds} />)
+    const status = screen.getByRole('status')
+    await userEvent.click(screen.getByRole('button', { name: '2×4' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Перемножить нельзя' }))
+    // та же самая живая область, а не новая: читалка объявит результат
+    expect(screen.getAllByRole('status')).toEqual([status])
+    expect(status).toHaveTextContent('Все раунды пройдены')
+    const finished = screen.getByText('2×3 · 2×3 → Перемножить нельзя').closest('[data-finished]')
+    expect(finished).toHaveFocus()
+    expect(finished).toContainElement(status)
+  })
+
+  it('moves focus to the finished block after «Показать правило» too', async () => {
+    render(<ShapeGame id="sg7" rounds={rounds} />)
+    const status = screen.getByRole('status')
+    await userEvent.click(screen.getByRole('button', { name: '3×3' }))
+    await userEvent.click(screen.getByRole('button', { name: '3×3' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать правило' }))
+    expect(status).toHaveTextContent(/Правило:/)
+    expect(screen.getByText('2×3 · 3×4 → 2×4').closest('[data-finished]')).toHaveFocus()
   })
 })

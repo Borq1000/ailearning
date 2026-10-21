@@ -22,6 +22,11 @@ function formatPercent(x: number): string {
   return x > 0 && x < 0.005 ? '<1%' : `${Math.round(x * 100)}%`
 }
 
+/** То же для строки итога: доля, которая округлилась бы до 0, подписывается «<0.01». */
+function formatShare(x: number): string {
+  return x > 0 && x < 0.005 ? '<0.01' : formatNum(x)
+}
+
 function BarColumn({
   title,
   names,
@@ -137,7 +142,7 @@ export function SoftmaxBars({
             />
           </label>
           <p className="readout">
-            softmax = [{shares.map(formatNum).join(', ')}] · сумма = {formatNum(total)}
+            softmax = [{shares.map(formatShare).join(', ')}] · сумма = {formatNum(total)}
           </p>
         </div>
       }

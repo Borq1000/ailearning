@@ -11,7 +11,8 @@ import { Axes3D } from '@/components/viz/vectors/three/Axes3D'
 import { DragHandle } from '@/components/viz/vectors/three/DragHandle'
 
 const AXIS_NAMES = ['X', 'Y', 'Z']
-const COLUMN_COLORS = [CONCEPTS.a.glow, CONCEPTS.b.glow, CONCEPTS.value.glow]
+/** Образы осей X′, Y′, Z′. Не цвета понятий: голубой, оранжевый и фиолетовый в этом уроке — запрос, ключ и значение. */
+export const COLUMN_COLORS = ['#f87171', '#fde047', '#f472b6']
 const INPUT_COLOR = '#dbe6ff'
 const RESULT_COLOR = CONCEPTS.result.glow
 const CUBE_COLOR = '#3b4a85'

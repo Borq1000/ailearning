@@ -27,10 +27,13 @@ export function Faded({ id, title, steps }: { id: string; title?: string; steps:
     gate.record(results.every(Boolean))
   }
 
-  /** Карточка на повторение: вопрос — шаги с пропусками, ответ — те же шаги с подставленными числами. */
+  /**
+   * Карточка на повторение: вопрос — шаги с пропусками, ответ — те же шаги с подставленными числами.
+   * Каждый шаг — с новой строки: точка-разделитель путалась бы со знаком умножения в заголовке.
+   */
   function revealAnswers() {
     const filled = steps.map((s) => (s.answer === undefined ? s.text : s.text.replace('▢', String(s.answer))))
-    const line = (parts: (string | undefined)[]) => parts.filter((p): p is string => Boolean(p)).join(' · ')
+    const line = (parts: (string | undefined)[]) => parts.filter((p): p is string => Boolean(p)).join('\n')
     gate.reveal({
       id: `faded:${id}`,
       kind: 'flip',

@@ -34,6 +34,8 @@ describe('SoftmaxBars', () => {
     render(<SoftmaxBars initial={[5, 0, -10]} />)
     expect(screen.getByText('4.54e-5')).toBeInTheDocument()
     expect(screen.getByText('<1%')).toBeInTheDocument()
+    // строка итога подписывает доли так же, как столбики: крошечная доля — «<0.01», а не «0»
+    expect(readout()).toHaveTextContent('softmax = [0.99, 0.01, <0.01] · сумма = 1')
   })
 
   it('sharpens with a lower temperature and survives huge scores without NaN', async () => {
@@ -44,7 +46,7 @@ describe('SoftmaxBars', () => {
     await userEvent.clear(field)
     await userEvent.type(field, '1000{Enter}')
     expect(field).toHaveValue('50')
-    expect(readout()).toHaveTextContent('softmax = [1, 0, 0]')
+    expect(readout()).toHaveTextContent('softmax = [1, <0.01, <0.01]')
     expect(readout()).not.toHaveTextContent('NaN')
   })
 
