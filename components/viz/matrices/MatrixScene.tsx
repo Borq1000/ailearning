@@ -3,8 +3,8 @@
 import { Html, Line } from '@react-three/drei'
 import { matVec, type Mat, type Vec } from '@/lib/math'
 import { CONCEPTS } from '@/lib/theme/concepts'
-import { CUBE_EDGES, column, cubeCorners, transformPoints } from '@/lib/viz/matrix-helpers'
-import { formatVec } from '@/lib/viz/vector-helpers'
+import { CUBE_EDGES, MATRIX_GRID_BOUND, column, cubeCorners, transformPoints } from '@/lib/viz/matrix-helpers'
+import { formatVec, vecEquals } from '@/lib/viz/vector-helpers'
 import { useStageInfo } from '@/components/viz/stage/stage-context'
 import { Arrow3D, pad3 } from '@/components/viz/vectors/three/Arrow3D'
 import { Axes3D } from '@/components/viz/vectors/three/Axes3D'
@@ -16,6 +16,26 @@ export const COLUMN_COLORS = ['#f87171', '#fde047', '#f472b6']
 const INPUT_COLOR = '#dbe6ff'
 const RESULT_COLOR = CONCEPTS.result.glow
 const CUBE_COLOR = '#3b4a85'
+/** Сцена меньше, чем у векторов (сетка ±3): шарик для перетаскивания тоже меньше. */
+const HANDLE_RADIUS = 0.08
+
+export interface TipLabel {
+  text: string
+  at: Vec
+  color: string
+  /** Сдвиг подписи от кончика стрелки (CSS transform). */
+  offset: string
+}
+
+/** Подписи кончиков v и M·v. Если M·v = v (например, у единичной матрицы), стрелки совпали — подпись одна, а не две друг на друге. */
+export function tipLabels(vector: Vec, image: Vec): TipLabel[] {
+  const result = { at: image, color: RESULT_COLOR, offset: 'translate(10px, 8px)' }
+  if (vecEquals(image, vector, 1e-9)) return [{ text: 'v = M·v', ...result }]
+  return [
+    { text: 'v', at: vector, color: INPUT_COLOR, offset: 'translate(10px, -20px)' },
+    { text: 'M·v', ...result },
+  ]
+}
 
 /**
  * Единичный куб до и после матрицы, три столбца как образы осей, входной вектор v и его образ M·v.
@@ -37,7 +57,7 @@ export function MatrixScene({
 
   return (
     <>
-      <Axes3D bound={2} />
+      <Axes3D bound={MATRIX_GRID_BOUND} />
       {CUBE_EDGES.map(([a, b], i) => (
         <Line key={`cube-${i}`} points={[pad3(corners[a]), pad3(corners[b])]} color={CUBE_COLOR} lineWidth={1} />
       ))}
@@ -76,10 +96,9 @@ export function MatrixScene({
             info?.show({ title: 'Вектор v', body: `v = ${formatVec(vector)} — то, что подаём на вход. Потяни за шарик.` })
           }}
         />
-        <Html position={pad3(vector)} className="vector-label" style={{ color: INPUT_COLOR, transform: 'translate(10px, -20px)' }}>
-          v
-        </Html>
-        {onVectorChange && <DragHandle position={vector} color={INPUT_COLOR} onDrag={onVectorChange} />}
+        {onVectorChange && (
+          <DragHandle position={vector} color={INPUT_COLOR} onDrag={onVectorChange} radius={HANDLE_RADIUS} />
+        )}
       </group>
       <group>
         <Arrow3D
@@ -93,10 +112,17 @@ export function MatrixScene({
             })
           }}
         />
-        <Html position={pad3(image)} className="vector-label" style={{ color: RESULT_COLOR, transform: 'translate(10px, 8px)' }}>
-          M·v
-        </Html>
       </group>
+      {tipLabels(vector, image).map((label) => (
+        <Html
+          key={label.text}
+          position={pad3(label.at)}
+          className="vector-label"
+          style={{ color: label.color, transform: label.offset }}
+        >
+          {label.text}
+        </Html>
+      ))}
     </>
   )
 }

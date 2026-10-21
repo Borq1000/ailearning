@@ -50,6 +50,13 @@ describe('SoftmaxBars', () => {
     expect(readout()).not.toHaveTextContent('NaN')
   })
 
+  it('keeps the case of column titles: eˣ must not turn into Eˣ', () => {
+    render(<SoftmaxBars initial={[2, 1, 0.1]} />)
+    const title = screen.getByText('2 · eˣ')
+    expect(title).not.toHaveClass('uppercase')
+    expect(title).toHaveClass('tracking-wider', 'text-space-muted')
+  })
+
   it('resets scores and temperature', async () => {
     render(<SoftmaxBars initial={[2, 1, 0.1]} />)
     await userEvent.click(screen.getByRole('button', { name: '+10 ко всем' }))

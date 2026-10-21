@@ -3,6 +3,13 @@ import { formatNum, formatVec } from './vector-helpers'
 
 /** Границы ячейки матрицы в полях сцены: ±3 хватает для поворотов, растяжений и сплющиваний, а куб не улетает за сетку. */
 export const MATRIX_BOUND = 3
+/** Сетка сцены матрицы — клетки от −3 до 3 по каждой оси. */
+export const MATRIX_GRID_BOUND = 3
+
+/** Точка вышла за сетку сцены хотя бы по одной координате. */
+export function outsideGrid(v: Vec, bound = MATRIX_GRID_BOUND): boolean {
+  return v.some((x) => Math.abs(x) > bound)
+}
 
 export type PresetId = 'identity' | 'stretch-x' | 'rotate-z' | 'flatten-z' | 'swap-xy'
 

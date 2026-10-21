@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   CUBE_EDGES,
   IMPOSSIBLE,
+  MATRIX_GRID_BOUND,
   PRESETS,
   column,
   cubeCorners,
   matEquals,
   matVecBreakdown,
+  outsideGrid,
   productShape,
   shapeOptions,
   transformPoints,
@@ -52,5 +54,12 @@ describe('matrix helpers', () => {
     expect(matEquals([[1]], [[1, 2]])).toBe(false)
     expect(PRESETS.map((p) => p.id)).toEqual(['identity', 'stretch-x', 'rotate-z', 'flatten-z', 'swap-xy'])
     expect(new Set(PRESETS.map((p) => p.label)).size).toBe(PRESETS.length)
+  })
+
+  it('tells when a point leaves the ±3 grid of the matrix scene', () => {
+    expect(MATRIX_GRID_BOUND).toBe(3)
+    expect(outsideGrid([3, -3, 0])).toBe(false)
+    expect(outsideGrid([0, -3.5, 0])).toBe(true)
+    expect(outsideGrid([6, 0, 0])).toBe(true)
   })
 })

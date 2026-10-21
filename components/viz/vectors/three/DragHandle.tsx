@@ -8,8 +8,24 @@ import type { Vec } from '@/lib/math'
 import { snapVec } from '@/lib/viz/vector-helpers'
 import { pad3 } from './Arrow3D'
 
-/** Светящийся шарик на кончике стрелки: тянется в плоскости экрана, координаты прилипают к сетке 0.5. */
-export function DragHandle({ position, color, onDrag }: { position: Vec; color: string; onDrag: (v: Vec) => void }) {
+const IDLE_RADIUS = 0.13
+const ACTIVE_RADIUS = 0.17
+
+/**
+ * Светящийся шарик на кончике стрелки: тянется в плоскости экрана, координаты прилипают к сетке 0.5.
+ * radius — размер в покое; под курсором шарик растёт в той же пропорции, что и шарик по умолчанию.
+ */
+export function DragHandle({
+  position,
+  color,
+  onDrag,
+  radius = IDLE_RADIUS,
+}: {
+  position: Vec
+  color: string
+  onDrag: (v: Vec) => void
+  radius?: number
+}) {
   const controls = useThree((s) => s.controls) as unknown as { enabled: boolean } | null
   const camera = useThree((s) => s.camera)
   const [dragging, setDragging] = useState(false)
@@ -75,7 +91,7 @@ export function DragHandle({ position, color, onDrag }: { position: Vec; color: 
       onPointerOver={() => setHover(true)}
       onPointerOut={() => setHover(false)}
     >
-      <sphereGeometry args={[active ? 0.17 : 0.13, 20, 20]} />
+      <sphereGeometry args={[active ? (radius * ACTIVE_RADIUS) / IDLE_RADIUS : radius, 20, 20]} />
       <meshStandardMaterial color={color} emissive={color} emissiveIntensity={active ? 0.9 : 0.5} />
     </mesh>
   )

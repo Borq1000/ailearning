@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react'
 import { matVec, type Mat, type Vec } from '@/lib/math'
 import { CONCEPTS } from '@/lib/theme/concepts'
-import { PRESETS, matEquals, matVecBreakdown, type PresetId } from '@/lib/viz/matrix-helpers'
+import { PRESETS, matEquals, matVecBreakdown, outsideGrid, type PresetId } from '@/lib/viz/matrix-helpers'
 import { formatVec } from '@/lib/viz/vector-helpers'
 import { Stage } from '@/components/viz/stage/Stage'
 import { StageFallbackNote } from '@/components/viz/stage/StageFallbackNote'
@@ -29,7 +29,7 @@ export function MatrixTransform3D({
 
   return (
     <Stage
-      camera={[3, 2.2, 3.5]}
+      camera={[4, 3, 5]}
       caption={caption}
       fallback={<StageFallbackNote />}
       controls={
@@ -54,6 +54,11 @@ export function MatrixTransform3D({
           <p className="readout">
             M·v = <span style={{ color: CONCEPTS.result.glow }}>{formatVec(image)}</span>
           </p>
+          {outsideGrid(image) && (
+            <p className="readout text-space-muted">
+              M·v вышла за край сетки — покрути колёсико мыши, чтобы отдалить сцену.
+            </p>
+          )}
           <ol className="readout m-0 list-none space-y-0.5 p-0 text-space-muted">
             {matVecBreakdown(matrix, v).map((line, i) => (
               <li key={i}>

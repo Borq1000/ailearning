@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { CONCEPTS } from '@/lib/theme/concepts'
 import { MatMulExplorer } from './MatMulExplorer'
-import { COLUMN_COLORS } from './MatrixScene'
+import { COLUMN_COLORS, tipLabels } from './MatrixScene'
 import { MatrixTransform3D } from './MatrixTransform3D'
 
 async function setField(name: string, value: string) {
@@ -53,11 +53,34 @@ describe('MatrixTransform3D without WebGL', () => {
   })
 })
 
-describe('MatrixScene colors', () => {
+describe('MatrixTransform3D: M·v outside the grid', () => {
+  it('suggests zooming out once a coordinate of M·v leaves the ±3 grid', async () => {
+    render(<MatrixTransform3D vector={[2, 0, 0]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    const notice = /M·v вышла за край сетки/
+    expect(screen.queryByText(notice)).toBeNull()
+    await setField('M, строка 1, столбец 1', '3')
+    expect(readout()).toHaveTextContent('M·v = [6, 0, 0]')
+    expect(screen.getByText(notice)).toHaveTextContent(
+      'M·v вышла за край сетки — покрути колёсико мыши, чтобы отдалить сцену.',
+    )
+    await setField('M, строка 1, столбец 1', '1,5')
+    expect(screen.queryByText(notice)).toBeNull()
+  })
+})
+
+describe('MatrixScene', () => {
   it('draws the column arrows X′, Y′, Z′ in colors that no concept uses', () => {
     const conceptColors = Object.values(CONCEPTS).flatMap((c) => [c.glow, c.ink])
     expect(COLUMN_COLORS).toEqual(['#f87171', '#fde047', '#f472b6'])
     for (const color of COLUMN_COLORS) expect(conceptColors).not.toContain(color)
+  })
+
+  it('labels v and M·v with one shared label when they coincide, so the labels do not overlap', () => {
+    expect(tipLabels([1, 0.5, 1], [1, 0.5, 1])).toEqual([
+      expect.objectContaining({ text: 'v = M·v', at: [1, 0.5, 1], color: CONCEPTS.result.glow }),
+    ])
+    expect(tipLabels([1, 0.5, 1], [2, 0.5, 1]).map((l) => l.text)).toEqual(['v', 'M·v'])
   })
 })
 

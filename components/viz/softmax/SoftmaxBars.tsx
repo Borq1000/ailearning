@@ -48,7 +48,8 @@ function BarColumn({
   const titleId = useId()
   return (
     <div>
-      <p id={titleId} className="m-0 mb-2 font-mono text-[11px] tracking-wider text-space-muted uppercase">
+      {/* без uppercase: он превратил бы eˣ в Eˣ, а это другой символ */}
+      <p id={titleId} className="m-0 mb-2 font-mono text-[11px] tracking-wider text-space-muted">
         {title}
       </p>
       <ul aria-labelledby={titleId} className="m-0 list-none space-y-1.5 p-0">
