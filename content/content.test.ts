@@ -75,6 +75,12 @@ describe('course content integrity', () => {
         expect(src).not.toMatch(/^import\s/m)
       })
 
+      it('keeps the row breaks of matrices in formulas', () => {
+        for (const [, body] of src.matchAll(/\\begin\{bmatrix\}([\s\S]*?)\\end\{bmatrix\}/g)) {
+          expect(body, `lesson ${lesson.id}: a lone backslash in a bmatrix is a space, not a row break`).not.toMatch(/(^|[^\\])\\\s/)
+        }
+      })
+
       it('references only existing glossary terms and exercises', () => {
         for (const [, id] of src.matchAll(/<Term id="([^"]+)"/g)) expect(GLOSSARY[id], `unknown term ${id}`).toBeDefined()
         for (const [, id] of src.matchAll(/<CodeExercise id="([^"]+)"/g)) expect(EXERCISES[id], `unknown exercise ${id}`).toBeDefined()
