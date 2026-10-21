@@ -7,7 +7,9 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { describe, expect, it } from 'vitest'
 import { EXERCISES } from '@/content/attention/exercises'
+import { EMBEDDINGS, contextualizePronoun } from '@/content/attention/toy-model'
 import { GLOSSARY } from '@/content/glossary'
+import { matMul, transpose } from '@/lib/math'
 import { cardIdsInSource, readyCardIds } from '@/lib/course/card-ids'
 import { findLessonById, flatLessons, getCourse } from '@/lib/course/registry'
 import remarkSteps from '@/lib/mdx/remark-steps.mjs'
@@ -118,5 +120,30 @@ describe('course content integrity', () => {
     expect(new Set(cardIds).size).toBe(cardIds.length)
     // значок «Повторение» в шапке знает ровно эти карточки
     expect(readyCardIds()).toEqual(cardIds.map((id) => scopeId(course.id, id)))
+  })
+})
+
+describe('lesson 1.5: the Q·Kᵀ table', () => {
+  const src = sourceOf('1-5-matmul')
+  const explorer = src.match(/<MatMulExplorer\s+a=\{(\[\[[^}]*\]\])\}\s+b=\{(\[\[[^}]*\]\])\}\s+aLabel="Q"/)
+  const q = JSON.parse(explorer![1]) as number[][]
+  const k = JSON.parse(explorer![2]) as number[][]
+  const qk = matMul(q, transpose(k))
+  const [, zabor, on] = [0, 1, 2]
+
+  it('uses the enriched «он» of the toy model as its query, so the table is not symmetric', () => {
+    expect(q[on]).toEqual(contextualizePronoun('tall'))
+    expect(k[on]).toEqual(EMBEDDINGS['он'])
+    expect(qk).not.toEqual(transpose(qk))
+  })
+
+  it('has exactly the numbers the lesson cites', () => {
+    expect(qk[on]).toEqual([0.5, 1.5, 0.25])
+    expect(qk[zabor][on]).toBe(0.5)
+    expect(src).toContain('0·0 + 1·1 + 0.5·1 = 1.5')
+    expect(src).toContain('А в клетке («забор», «он») стоит 0.5')
+    // отвлекающие варианты Check не совпадают с ответом: сумма координат «забор» и произведение длин
+    expect(k[zabor].reduce((s, x) => s + x, 0)).toBe(2)
+    expect(Math.hypot(...q[on]) * Math.hypot(...k[zabor])).not.toBeCloseTo(1.5, 2)
   })
 })
