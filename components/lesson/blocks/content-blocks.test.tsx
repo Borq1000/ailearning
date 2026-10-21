@@ -126,6 +126,27 @@ describe('Levels', () => {
     }
     expect(screen.getByRole('tabpanel', { name: 'История' })).toHaveTextContent('сказка')
   })
+
+  it('moves between levels with the arrow keys (roving tabindex)', async () => {
+    render(
+      <Levels>
+        <Level title="История"><p>сказка</p></Level>
+        <Level title="Геометрия"><p>картинка</p></Level>
+        <Level title="Алгебра"><p>формула</p></Level>
+      </Levels>,
+    )
+    const first = screen.getByRole('tab', { name: 'История' })
+    expect(first).toHaveAttribute('tabindex', '0')
+    expect(screen.getByRole('tab', { name: 'Алгебра' })).toHaveAttribute('tabindex', '-1')
+    first.focus()
+    await userEvent.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: 'Геометрия' })).toHaveFocus()
+    expect(screen.getByText('картинка')).toBeVisible()
+    await userEvent.keyboard('{End}')
+    expect(screen.getByRole('tab', { name: 'Алгебра' })).toHaveAttribute('aria-selected', 'true')
+    await userEvent.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: 'История' })).toHaveFocus()
+  })
 })
 
 describe('Term', () => {

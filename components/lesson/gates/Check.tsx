@@ -24,6 +24,8 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
   const [text, setText] = useState('')
   const [verdict, setVerdict] = useState<'wrong' | 'not-a-number' | null>(null)
   const solved = gate.passed
+  // после перезагрузки локального выбора нет — помечаем верный вариант, чтобы читалка знала ответ
+  const shownChoice = solved && selected === null ? answer : selected
 
   function submit() {
     if (options) {
@@ -66,9 +68,9 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
               key={option}
               type="button"
               role="radio"
-              aria-checked={selected === i}
+              aria-checked={shownChoice === i}
               className="option-btn"
-              data-selected={selected === i}
+              data-selected={shownChoice === i}
               data-right={solved && i === answer}
               disabled={solved}
               onClick={() => {
@@ -95,7 +97,7 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
             setVerdict(null)
           }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') submit()
+            if (e.key === 'Enter' && text.trim() !== '') submit()
           }}
         />
       )}
@@ -118,24 +120,18 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
         </div>
       )}
 
-      {!solved && verdict === 'wrong' && (
-        <p role="status" className="feedback-wrong">
-          {wrongText}
-        </p>
-      )}
-      {!solved && verdict === 'not-a-number' && (
-        <p role="status" className="feedback-wrong">
-          Введи число, например 0.5 или −2
-        </p>
-      )}
-      {solved && (
-        <div role="status" className="feedback-right">
-          <p className="m-0">
-            {gate.revealed ? `Ответ: ${answerText}. Этот вопрос вернётся к тебе на повторении.` : '✓ Верно!'}
-          </p>
-          {explain && <div className="mt-2 text-ink">{explain}</div>}
-        </div>
-      )}
+      <div role="status" aria-live="polite">
+        {!solved && verdict === 'wrong' && <p className="feedback-wrong">{wrongText}</p>}
+        {!solved && verdict === 'not-a-number' && <p className="feedback-wrong">Введи число, например 0.5 или −2</p>}
+        {solved && (
+          <div className="feedback-right">
+            <p className="m-0">
+              {gate.revealed ? `Ответ: ${answerText}. Этот вопрос вернётся к тебе на повторении.` : '✓ Верно!'}
+            </p>
+            {explain && <div className="mt-2 text-ink">{explain}</div>}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

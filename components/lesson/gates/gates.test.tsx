@@ -133,3 +133,34 @@ describe('gates inside a lesson', () => {
     expect(useProgress.getState().cards['t/check:q9']?.box).toBe(1)
   })
 })
+
+describe('Check polish', () => {
+  it('marks the right option as checked after a reload', () => {
+    useProgress.getState().recordAttempt('q7', true)
+    render(<Check id="q7" question="2 + 2?" options={['3', '4']} answer={1} />)
+    expect(screen.getByRole('radio', { name: '4' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('radio', { name: '3' })).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('ignores Enter in an empty field instead of complaining', async () => {
+    render(<Check id="q8" question="Сколько?" answer={2} />)
+    const field = screen.getByRole('textbox', { name: 'Твой ответ' })
+    field.focus()
+    await userEvent.keyboard('{Enter}')
+    expect(screen.queryByText(/Введи число/)).toBeNull()
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  })
+})
+
+describe('ExplainBack polish', () => {
+  it('disables «Готово» again if the explanation is erased below the minimum', async () => {
+    render(<ExplainBack id="e2" prompt="Объясни" reference={<span>Эталон</span>} points={['пункт']} />)
+    const area = screen.getByRole('textbox', { name: 'Твоё объяснение' })
+    await userEvent.type(area, 'Достаточно длинное объяснение для сравнения')
+    await userEvent.click(screen.getByRole('button', { name: 'Сравнить с эталоном' }))
+    const done = screen.getByRole('button', { name: 'Готово, я сравнил' })
+    expect(done).toBeEnabled()
+    await userEvent.clear(area)
+    expect(done).toBeDisabled()
+  })
+})

@@ -283,4 +283,14 @@ describe('migration to schema v2 (course-scoped keys)', () => {
     expect(p).toEqual(emptyProgress())
     expect(localStorage.getItem(BACKUP_KEY)).toContain('"version":7')
   })
+
+  it('restores a v1 backup envelope and rejects a broken one', () => {
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ version: 1, state: v1 }))
+    expect(s().restoreBackup()).toBe(true)
+    expect(s().lessons['attention/0.1'].status).toBe('completed')
+    localStorage.setItem(BACKUP_KEY, '{oops')
+    expect(s().restoreBackup()).toBe(false)
+    localStorage.removeItem(BACKUP_KEY)
+    expect(s().restoreBackup()).toBe(false)
+  })
 })

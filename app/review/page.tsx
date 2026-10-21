@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { BackupPanel } from '@/components/review/BackupPanel'
 import { ReviewDeck } from '@/components/review/ReviewDeck'
 import { loadLessonModule } from '@/lib/course/lesson-module'
 import { listCourses, readyLessons } from '@/lib/course/registry'
@@ -31,6 +32,7 @@ export default async function ReviewPage() {
       <div className="mt-8">
         <ReviewDeck cards={cards} />
       </div>
+      <BackupPanel />
     </main>
   )
 }

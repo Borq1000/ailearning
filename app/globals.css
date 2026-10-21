@@ -231,6 +231,9 @@
   .stage-chip[data-active='true'] {
     @apply border-glow-cyan bg-glow-cyan/15 text-glow-cyan;
   }
+  .stage-chip:disabled {
+    @apply cursor-not-allowed opacity-40 hover:border-white/20;
+  }
   /* слова в дугах внимания: рамка видна только при фокусе с клавиатуры */
   .attn-focus {
     stroke: transparent;

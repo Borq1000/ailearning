@@ -1,17 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useProgress } from './store'
 
+const subscribe = (onChange: () => void) => useProgress.persist.onFinishHydration(onChange)
+const getSnapshot = () => useProgress.persist.hasHydrated()
+const getServerSnapshot = () => false
+
 /**
- * false — на сервере и при первой отрисовке на клиенте (совпадает с серверным HTML);
- * true — когда прогресс из localStorage загружен.
+ * false — на сервере и при гидратации (совпадает с серверным HTML); true — когда прогресс из localStorage загружен.
+ * useSyncExternalStore гидратационно безопасен по построению: серверный снимок всегда false.
  */
 export function useHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(() => useProgress.persist.hasHydrated())
-  useEffect(() => {
-    const unsubscribe = useProgress.persist.onFinishHydration(() => setHydrated(true))
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- состояние зависит от localStorage и синхронизируется только после гидратации
-    setHydrated(useProgress.persist.hasHydrated())
-    return unsubscribe
-  }, [])
-  return hydrated
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }

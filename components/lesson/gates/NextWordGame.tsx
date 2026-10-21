@@ -16,8 +16,11 @@ export function NextWordGame({ id, rounds }: { id: string; rounds: WordRound[] }
   const gate = useGate(id)
   const [picks, setPicks] = useState<(number | null)[]>(() => rounds.map(() => null))
 
+  // После перезагрузки локальных ответов нет, а ворота пройдены: показываем лучшие ответы и комментарии
+  const restored = gate.passed && picks.every((p) => p === null)
+
   function pick(round: number, option: number) {
-    if (picks[round] !== null) return
+    if (gate.passed || picks[round] !== null) return
     const next = picks.map((p, i) => (i === round ? option : p))
     setPicks(next)
     if (next.every((p) => p !== null)) gate.pass()
@@ -28,7 +31,7 @@ export function NextWordGame({ id, rounds }: { id: string; rounds: WordRound[] }
       <p className="gate-label m-0">Игра · угадай следующее слово</p>
       <ol className="mt-3 list-none space-y-5 p-0">
         {rounds.map((round, r) => {
-          const picked = picks[r]
+          const picked = restored ? round.answers[0] : picks[r]
           const good = picked !== null && round.answers.includes(picked)
           return (
             <li key={round.context} className="m-0">

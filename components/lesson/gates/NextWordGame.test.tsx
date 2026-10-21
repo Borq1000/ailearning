@@ -32,4 +32,17 @@ describe('NextWordGame', () => {
     expect(screen.getByText(/✓ Подходит всё/)).toBeInTheDocument()
     expect(useProgress.getState().gates.nw.passed).toBe(true)
   })
+
+  it('shows the best answers and notes for a game passed before a reload', () => {
+    useProgress.getState().passGate('nw2')
+    render(
+      <NextWordGame
+        id="nw2"
+        rounds={[{ context: 'Я пью горячий…', options: ['чай', 'снег'], answers: [0], note: 'Напиток.' }]}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'чай' })).toHaveAttribute('data-right', 'true')
+    expect(screen.getByText(/✓ Напиток\./)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'снег' })).toHaveAttribute('aria-disabled', 'true')
+  })
 })

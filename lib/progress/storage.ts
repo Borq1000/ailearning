@@ -32,6 +32,15 @@ export function readRawProgress(): string | null {
   }
 }
 
+/** Резервная копия как есть (битый JSON, чужая версия) — для восстановления или выгрузки. */
+export function readBackup(): string | null {
+  try {
+    return window.localStorage.getItem(BACKUP_KEY)
+  } catch {
+    return null
+  }
+}
+
 /** Аварийный сброс: копия прогресса уходит в `ailearning:backup`, затем сам прогресс удаляется. */
 export function resetStoredProgress(): void {
   try {

@@ -61,7 +61,7 @@ export function Faded({ id, title, steps }: { id: string; title?: string; steps:
                   disabled={solved}
                   onChange={(e) => setValues((vs) => vs.map((v, j) => (j === i ? e.target.value : v)))}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') check()
+                    if (e.key === 'Enter' && values[i].trim() !== '') check()
                   }}
                 />
                 {wrong[i] && !solved && <span className="text-sm text-error">не то</span>}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Children, isValidElement, useId, useState, type ReactElement, type ReactNode } from 'react'
+import { Children, isValidElement, useId, useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react'
 
 export function Level({ children }: { title: string; children?: ReactNode }) {
   return <>{children}</>
@@ -20,6 +20,20 @@ export function Levels({ children }: { children?: ReactNode }) {
   const tabId = (i: number) => `${baseId}-tab-${i}`
   const panelId = (i: number) => `${baseId}-panel-${i}`
 
+  function onKeyDown(e: KeyboardEvent<HTMLButtonElement>, i: number) {
+    const last = levels.length - 1
+    const next =
+      e.key === 'ArrowRight' ? (i === last ? 0 : i + 1)
+      : e.key === 'ArrowLeft' ? (i === 0 ? last : i - 1)
+      : e.key === 'Home' ? 0
+      : e.key === 'End' ? last
+      : null
+    if (next === null) return
+    e.preventDefault()
+    setActive(next)
+    document.getElementById(tabId(next))?.focus()
+  }
+
   return (
     <div className="levels">
       <div role="tablist" aria-label="Уровень объяснения" className="levels-tabs">
@@ -30,9 +44,11 @@ export function Levels({ children }: { children?: ReactNode }) {
             type="button"
             role="tab"
             aria-selected={active === i}
+            tabIndex={active === i ? 0 : -1}
             aria-controls={panelId(i)}
             className="levels-tab"
             onClick={() => setActive(i)}
+            onKeyDown={(e) => onKeyDown(e, i)}
           >
             {level.props.title}
           </button>

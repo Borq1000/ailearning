@@ -3,7 +3,7 @@ import { createJSONStorage, persist, type StateStorage } from 'zustand/middlewar
 import type { Card } from '@/lib/course/types'
 import { CURRENT_VERSION, emptyProgress, migrateProgress, normalizeProgress } from './migrate'
 import { addDays, newCard, nextReview } from './scheduler'
-import { STORAGE_KEY, createSafeStorage } from './storage'
+import { STORAGE_KEY, createSafeStorage, readBackup } from './storage'
 import type { GateProgress, ProgressData } from './types'
 
 export interface ProgressActions {
@@ -17,6 +17,7 @@ export interface ProgressActions {
   reviewCard(cardId: string, correct: boolean, today: string): void
   exportProgress(): string
   importProgress(json: string): boolean
+  restoreBackup(): boolean
   resetProgress(): void
 }
 
@@ -109,6 +110,24 @@ export const useProgress = create<ProgressStore>()(
           // файлы старого формата (без префиксов курса) поднимаем так же, как сохранённый прогресс
           if (version !== 1 && version !== CURRENT_VERSION) return false
           set(migrateProgress(parsed, version))
+          return true
+        } catch {
+          return false
+        }
+      },
+
+      restoreBackup: () => {
+        const raw = readBackup()
+        if (raw === null) return false
+        try {
+          const parsed: unknown = JSON.parse(raw)
+          if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return false
+          const envelope = parsed as { version?: unknown; state?: unknown }
+          // копия — либо запись zustand persist { version, state }, либо сырой экспорт прогресса
+          const data = typeof envelope.state === 'object' && envelope.state !== null ? envelope.state : parsed
+          const version = envelope.version
+          if (version !== 1 && version !== CURRENT_VERSION) return false
+          set(migrateProgress(data, version))
           return true
         } catch {
           return false

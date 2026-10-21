@@ -67,7 +67,7 @@ export function ExplainBack({ id, prompt, reference, points }: ExplainBackProps)
             ))}
           </ul>
           {!gate.passed && (
-            <button type="button" className="btn-primary mt-4" onClick={gate.pass}>
+            <button type="button" className="btn-primary mt-4" disabled={!canCompare} onClick={gate.pass}>
               Готово, я сравнил
             </button>
           )}
