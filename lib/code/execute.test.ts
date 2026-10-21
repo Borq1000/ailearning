@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { executeExercise } from './execute'
+import { executeExercise, formatValue } from './execute'
 import type { ExerciseDef } from './types'
 
 const exercise: ExerciseDef = {
@@ -86,5 +86,37 @@ describe('executeExercise', () => {
     }
     const result = executeExercise('function twice(a: number[], b: number[]) { return 2 * dot(a, b) }', usesDot)
     expect(result.status === 'ok' && result.results[0].pass).toBe(true)
+  })
+})
+
+describe('formatValue', () => {
+  it('does not round small numbers down to «0»', () => {
+    expect(formatValue(0.00001)).toBe('1.00e-5')
+    expect(formatValue(0)).toBe('0')
+    expect(formatValue(0.26894)).toBe('0.2689')
+    expect(formatValue(0.26894, 8)).toBe('0.26894')
+  })
+
+  it('names special values instead of hiding them', () => {
+    expect(formatValue(Number.NaN)).toBe('NaN')
+    expect(formatValue(Infinity)).toBe('Infinity')
+    expect(formatValue(Symbol('x'))).toBe('Symbol(x)')
+    expect(formatValue(BigInt(10))).toBe('10')
+    expect(formatValue([0.5, [1, 2]])).toBe('[0.5, [1, 2]]')
+  })
+})
+
+describe('executeExercise report', () => {
+  it('shows more digits when the rounded expected and actual texts coincide', () => {
+    const close: ExerciseDef = {
+      ...exercise,
+      tests: [{ name: 'p', args: [], expected: 0.2689, tolerance: 1e-6 }],
+    }
+    const result = executeExercise('function sum() { return 0.26894 }', close)
+    expect(result.status === 'ok' && result.results[0]).toMatchObject({
+      pass: false,
+      expectedText: '0.2689',
+      actualText: '0.26894',
+    })
   })
 })

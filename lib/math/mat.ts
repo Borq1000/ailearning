@@ -2,8 +2,14 @@ import { dot, type Vec } from './vec'
 
 export type Mat = number[][]
 
+/** Размер матрицы [строк, столбцов]. «Рваная» матрица (строки разной длины) — ошибка, а не тихий мусор. */
 export function shape(m: Mat): [number, number] {
-  return [m.length, m.length === 0 ? 0 : m[0].length]
+  const cols = m.length === 0 ? 0 : m[0].length
+  const ragged = m.findIndex((row) => row.length !== cols)
+  if (ragged !== -1) {
+    throw new Error(`mat: ragged matrix (row ${ragged} has ${m[ragged].length} columns, expected ${cols})`)
+  }
+  return [m.length, cols]
 }
 
 export function transpose(m: Mat): Mat {

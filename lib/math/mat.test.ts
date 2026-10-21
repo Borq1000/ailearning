@@ -47,4 +47,11 @@ describe('mat', () => {
   it('refuses incompatible shapes', () => {
     expect(() => matMul([[1, 2]], [[1, 2]])).toThrow(/incompatible/)
   })
+
+  it('refuses ragged matrices in shape, transpose and matMul', () => {
+    const ragged = [[1, 2], [3]]
+    expect(() => shape(ragged)).toThrow(/ragged.*row 1 has 1/)
+    expect(() => transpose(ragged)).toThrow(/ragged/)
+    expect(() => matMul(ragged, [[1], [2]])).toThrow(/ragged/)
+  })
 })

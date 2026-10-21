@@ -16,11 +16,19 @@ function errorMessage(e: unknown): string {
 }
 
 /** Короткое текстовое представление значения для отчёта «ожидалось / получено». */
-export function formatValue(value: unknown): string {
-  if (typeof value === 'number') return Number.isInteger(value) ? String(value) : String(Math.round(value * 10000) / 10000)
-  if (Array.isArray(value)) return `[${value.map(formatValue).join(', ')}]`
+export function formatValue(value: unknown, digits = 4): string {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return String(value)
+    if (Number.isInteger(value)) return String(value)
+    const factor = 10 ** digits
+    const rounded = Math.round(value * factor) / factor
+    // маленькое ненулевое число не должно превращаться в «0»
+    return rounded === 0 ? value.toExponential(2) : String(rounded)
+  }
+  if (Array.isArray(value)) return `[${value.map((v) => formatValue(v, digits)).join(', ')}]`
   if (typeof value === 'function') return '[функция]'
   if (value === undefined) return 'undefined'
+  if (typeof value === 'symbol' || typeof value === 'bigint') return String(value)
   try {
     return JSON.stringify(value)
   } catch {
@@ -52,16 +60,18 @@ export function executeExercise(source: string, exercise: ExerciseDef): Executio
   }
 
   const results: TestResult[] = exercise.tests.map((test) => {
-    const expectedText = formatValue(test.expected)
+    let expectedText = formatValue(test.expected)
     try {
       // structuredClone: если код ученика испортит аргументы, следующие тесты этого не увидят
       const actual: unknown = (fn as (...args: unknown[]) => unknown)(...structuredClone(test.args))
-      return {
-        name: test.name,
-        pass: approxEqual(actual, test.expected, test.tolerance ?? 1e-6),
-        expectedText,
-        actualText: formatValue(actual),
+      const pass = approxEqual(actual, test.expected, test.tolerance ?? 1e-6)
+      let actualText = formatValue(actual)
+      // «ожидалось 0.2689, получено 0.2689» ничего не объясняет: при провале с одинаковыми текстами показываем больше знаков
+      if (!pass && actualText === expectedText) {
+        expectedText = formatValue(test.expected, 8)
+        actualText = formatValue(actual, 8)
       }
+      return { name: test.name, pass, expectedText, actualText }
     } catch (e) {
       return { name: test.name, pass: false, expectedText, error: errorMessage(e) }
     }

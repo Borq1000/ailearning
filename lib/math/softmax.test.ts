@@ -35,4 +35,14 @@ describe('softmax', () => {
   it('returns an empty list for no scores', () => {
     expect(softmax([])).toEqual([])
   })
+
+  it('rejects a NaN or non-positive temperature', () => {
+    expect(() => softmax([1, 2], Number.NaN)).toThrow(/temperature/)
+    expect(() => softmax([1, 2], -1)).toThrow(/temperature/)
+  })
+
+  it('gives masked-out positions zero weight and splits evenly when everything is masked', () => {
+    expect(softmax([1, -Infinity, 1])).toEqual([0.5, 0, 0.5])
+    expect(softmax([-Infinity, -Infinity])).toEqual([0.5, 0.5])
+  })
 })
