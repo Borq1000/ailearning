@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import type { Card } from '@/lib/course/types'
-import { CURRENT_VERSION, emptyProgress, migrateProgress, normalizeProgress } from './migrate'
+import { CURRENT_VERSION, emptyProgress, isEmptyProgress, migrateProgress, normalizeProgress } from './migrate'
 import { addDays, newCard, nextReview } from './scheduler'
 import { STORAGE_KEY, createSafeStorage, readBackup } from './storage'
 import type { GateProgress, ProgressData } from './types'
@@ -127,7 +127,10 @@ export const useProgress = create<ProgressStore>()(
           const data = typeof envelope.state === 'object' && envelope.state !== null ? envelope.state : parsed
           const version = envelope.version
           if (version !== 1 && version !== CURRENT_VERSION) return false
-          set(migrateProgress(data, version))
+          const restored = migrateProgress(data, version)
+          // пустая копия не должна стирать то, что есть сейчас
+          if (isEmptyProgress(restored)) return false
+          set(restored)
           return true
         } catch {
           return false

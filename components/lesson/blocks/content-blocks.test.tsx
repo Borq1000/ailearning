@@ -147,6 +147,18 @@ describe('Levels', () => {
     await userEvent.keyboard('{ArrowRight}')
     expect(screen.getByRole('tab', { name: 'История' })).toHaveFocus()
   })
+
+  it('leaves Alt+arrow to the browser', async () => {
+    render(
+      <Levels>
+        <Level title="История"><p>сказка</p></Level>
+        <Level title="Геометрия"><p>картинка</p></Level>
+      </Levels>,
+    )
+    screen.getByRole('tab', { name: 'История' }).focus()
+    await userEvent.keyboard('{Alt>}{ArrowRight}{/Alt}')
+    expect(screen.getByRole('tab', { name: 'История' })).toHaveAttribute('aria-selected', 'true')
+  })
 })
 
 describe('Term', () => {

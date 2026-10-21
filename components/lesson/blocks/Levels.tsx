@@ -21,6 +21,8 @@ export function Levels({ children }: { children?: ReactNode }) {
   const panelId = (i: number) => `${baseId}-panel-${i}`
 
   function onKeyDown(e: KeyboardEvent<HTMLButtonElement>, i: number) {
+    // Alt+← — «назад» в браузере, Ctrl/Cmd+стрелки — системные жесты
+    if (e.altKey || e.ctrlKey || e.metaKey) return
     const last = levels.length - 1
     const next =
       e.key === 'ArrowRight' ? (i === last ? 0 : i + 1)

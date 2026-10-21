@@ -293,4 +293,22 @@ describe('migration to schema v2 (course-scoped keys)', () => {
     localStorage.removeItem(BACKUP_KEY)
     expect(s().restoreBackup()).toBe(false)
   })
+
+  it('restores a v2 envelope', () => {
+    const state = { ...emptyProgress(), lessons: { 'attention/0.1': { status: 'completed', unlockedStep: 3 } } }
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ version: 2, state }))
+    expect(s().restoreBackup()).toBe(true)
+    expect(s().lessons['attention/0.1'].status).toBe('completed')
+  })
+
+  it('never touches current progress for an unknown version or an empty backup', () => {
+    useProgress.getState().passGate('attention/keep')
+    const before = s().gates
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ version: 7, state: { lessons: { x: 1 } } }))
+    expect(s().restoreBackup()).toBe(false)
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ version: 2 }))
+    expect(s().restoreBackup()).toBe(false)
+    expect(s().gates).toBe(before)
+    expect(s().gates['attention/keep'].passed).toBe(true)
+  })
 })

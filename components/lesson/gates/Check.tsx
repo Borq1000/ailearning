@@ -23,6 +23,8 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
   const [selected, setSelected] = useState<number | null>(null)
   const [text, setText] = useState('')
   const [verdict, setVerdict] = useState<'wrong' | 'not-a-number' | null>(null)
+  // результат объявляем читалке только после действия на этой странице, а не когда прогресс подгрузился из хранилища
+  const [announce, setAnnounce] = useState(false)
   const solved = gate.passed
   // после перезагрузки локального выбора нет — помечаем верный вариант, чтобы читалка знала ответ
   const shownChoice = solved && selected === null ? answer : selected
@@ -30,6 +32,7 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
   function submit() {
     if (options) {
       if (selected === null) return
+      setAnnounce(true)
       const correct = selected === answer
       setVerdict(correct ? null : 'wrong')
       gate.record(correct)
@@ -40,12 +43,14 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
       setVerdict('not-a-number')
       return
     }
+    setAnnounce(true)
     const correct = Math.abs(value - answer) <= tolerance
     setVerdict(correct ? null : 'wrong')
     gate.record(correct)
   }
 
   function revealAnswer() {
+    setAnnounce(true)
     const card: Card = options
       ? { id: `check:${id}`, kind: 'choice', prompt: question, options, correct: answer, answer: options[answer] }
       : { id: `check:${id}`, kind: 'flip', prompt: question, answer: String(answer) }
@@ -55,6 +60,14 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
   const answerText = options ? options[answer] : String(answer)
   const wrongText =
     (options && selected !== null && feedback?.[selected]) || 'Пока нет. Подумай ещё раз — ты справишься.'
+  const solvedBlock = (
+    <div className="feedback-right">
+      <p className="m-0">
+        {gate.revealed ? `Ответ: ${answerText}. Этот вопрос вернётся к тебе на повторении.` : '✓ Верно!'}
+      </p>
+      {explain && <div className="mt-2 text-ink">{explain}</div>}
+    </div>
+  )
 
   return (
     <div className="gate-card" data-gate="check" data-passed={solved}>
@@ -123,15 +136,9 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
       <div role="status" aria-live="polite">
         {!solved && verdict === 'wrong' && <p className="feedback-wrong">{wrongText}</p>}
         {!solved && verdict === 'not-a-number' && <p className="feedback-wrong">Введи число, например 0.5 или −2</p>}
-        {solved && (
-          <div className="feedback-right">
-            <p className="m-0">
-              {gate.revealed ? `Ответ: ${answerText}. Этот вопрос вернётся к тебе на повторении.` : '✓ Верно!'}
-            </p>
-            {explain && <div className="mt-2 text-ink">{explain}</div>}
-          </div>
-        )}
+        {solved && announce && solvedBlock}
       </div>
+      {solved && !announce && solvedBlock}
     </div>
   )
 }

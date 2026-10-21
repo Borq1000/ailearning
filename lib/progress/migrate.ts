@@ -11,6 +11,11 @@ export function emptyProgress(): ProgressData {
   return { version: 2, lessons: {}, gates: {}, code: {}, explanations: {}, cards: {}, customCards: {} }
 }
 
+/** Нет ни уроков, ни ворот, ни кода, ни объяснений, ни карточек. */
+export function isEmptyProgress(p: ProgressData): boolean {
+  return [p.lessons, p.gates, p.code, p.explanations, p.cards, p.customCards].every((m) => Object.keys(m).length === 0)
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

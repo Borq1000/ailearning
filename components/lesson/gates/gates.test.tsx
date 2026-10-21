@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { emptyProgress } from '@/lib/progress/migrate'
@@ -149,6 +149,22 @@ describe('Check polish', () => {
     await userEvent.keyboard('{Enter}')
     expect(screen.queryByText(/Введи число/)).toBeNull()
     expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  })
+})
+
+describe('Check live region', () => {
+  it('does not announce a result that arrived from storage, only a fresh answer', async () => {
+    render(<Check id="q9" question="2 + 2?" options={['3', '4']} answer={1} />)
+    act(() => useProgress.getState().recordAttempt('q9', true))
+    expect(screen.getByText('✓ Верно!')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  })
+
+  it('announces the result of an answer given on this page', async () => {
+    render(<Check id="q10" question="2 + 2?" options={['3', '4']} answer={1} />)
+    await userEvent.click(screen.getByRole('radio', { name: '4' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    expect(screen.getByRole('status')).toHaveTextContent('✓ Верно!')
   })
 })
 
