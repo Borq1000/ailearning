@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react'
 import type { Card } from '@/lib/course/types'
 import { parseNumber } from '@/lib/parse-number'
+import { seededShuffle } from '@/lib/progress/scheduler'
 import { useGate } from '@/components/lesson/engine/useGate'
 
 export interface CheckProps {
@@ -76,9 +77,10 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
 
       {options ? (
         <div role="radiogroup" aria-label={question} className="mt-3 flex flex-col gap-2">
-          {options.map((option, i) => (
+          {/* порядок перемешан по id (одинаково на сервере и в браузере); логика работает с исходными индексами */}
+          {seededShuffle(options.map((_, i) => i), id).map((i) => (
             <button
-              key={option}
+              key={options[i]}
               type="button"
               role="radio"
               aria-checked={shownChoice === i}
@@ -91,7 +93,7 @@ export function Check({ id, question, options, answer, tolerance = 0.01, explain
                 setVerdict(null)
               }}
             >
-              {option}
+              {options[i]}
             </button>
           ))}
         </div>

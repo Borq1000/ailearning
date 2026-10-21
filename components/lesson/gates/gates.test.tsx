@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { emptyProgress } from '@/lib/progress/migrate'
+import { seededShuffle } from '@/lib/progress/scheduler'
 import { useProgress } from '@/lib/progress/store'
 import { LessonProvider } from '@/components/lesson/engine/LessonContext'
 import { Check } from './Check'
@@ -165,6 +166,65 @@ describe('Check live region', () => {
     await userEvent.click(screen.getByRole('radio', { name: '4' }))
     await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
     expect(screen.getByRole('status')).toHaveTextContent('✓ Верно!')
+  })
+})
+
+const optionNames = () => screen.getAllByRole('radio').map((b) => b.textContent)
+
+describe('option order', () => {
+  it('Check shows its options in a fixed shuffled order and still checks by the original index', async () => {
+    const options = ['3', '4', '5']
+    render(<Check id="q11" question="2 + 2?" options={options} answer={1} feedback={['мало', '', 'много']} />)
+    const shown = optionNames()
+    expect(shown).toEqual(seededShuffle([0, 1, 2], 'q11').map((i) => options[i]))
+    expect([...shown].sort()).toEqual([...options].sort())
+    // для этого id правильный ответ не стоит на своём исходном месте — порядок действительно перемешан
+    expect(shown).not.toEqual(options)
+
+    await userEvent.click(screen.getByRole('radio', { name: '5' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    expect(screen.getByText('много')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: '4' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    expect(gates().q11.passed).toBe(true)
+    expect(screen.getByRole('radio', { name: '4' })).toHaveAttribute('data-right', 'true')
+    expect(screen.getByRole('radio', { name: '4' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('Check builds the review card from the original options', async () => {
+    render(<Check id="q11" question="2 + 2?" options={['3', '4', '5']} answer={1} />)
+    await userEvent.click(screen.getByRole('radio', { name: '3' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
+    expect(useProgress.getState().customCards['check:q11']).toMatchObject({
+      options: ['3', '4', '5'],
+      correct: 1,
+      answer: '4',
+    })
+  })
+
+  it('Predict shows its options shuffled and stores the original index of the choice', async () => {
+    const options = ['кот', 'забор', 'он']
+    render(<Predict id="p3" question="Кто?" options={options} answer={1} />)
+    const shown = optionNames()
+    expect(shown).toEqual(seededShuffle([0, 1, 2], 'p3').map((i) => options[i]))
+    expect(shown).not.toEqual(options)
+    // «он» стоит на втором месте, а в прогресс попадает его исходный индекс 2
+    expect(shown.indexOf('он')).not.toBe(2)
+    await userEvent.click(screen.getByRole('radio', { name: 'он' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Зафиксировать прогноз' }))
+    expect(gates().p3).toMatchObject({ passed: true, choice: 2 })
+    expect(screen.getByText(/Твой прогноз: «он»/)).toBeInTheDocument()
+    expect(screen.getByText(/На самом деле — «забор»/)).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'забор' })).toHaveAttribute('data-right', 'true')
+  })
+
+  it('Predict marks the stored choice after a reload', () => {
+    useProgress.getState().recordAttempt('p3', true, 2)
+    render(<Predict id="p3" question="Кто?" options={['кот', 'забор', 'он']} answer={1} />)
+    expect(screen.getByRole('radio', { name: 'он' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('radio', { name: 'кот' })).toHaveAttribute('aria-checked', 'false')
   })
 })
 

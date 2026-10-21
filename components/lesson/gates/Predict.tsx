@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
+import { seededShuffle } from '@/lib/progress/scheduler'
 import { useGate } from '@/components/lesson/engine/useGate'
 
 export interface PredictProps {
@@ -23,9 +24,10 @@ export function Predict({ id, question, options, answer, children }: PredictProp
       <p className="gate-label">Предскажи</p>
       <p className="gate-question">{question}</p>
       <div role="radiogroup" aria-label={question} className="mt-3 flex flex-col gap-2">
-        {options.map((option, i) => (
+        {/* порядок перемешан по id (одинаково на сервере и в браузере); в прогресс идёт исходный индекс */}
+        {seededShuffle(options.map((_, i) => i), id).map((i) => (
           <button
-            key={option}
+            key={options[i]}
             type="button"
             role="radio"
             aria-checked={choice === i}
@@ -35,7 +37,7 @@ export function Predict({ id, question, options, answer, children }: PredictProp
             disabled={committed}
             onClick={() => setSelected(i)}
           >
-            {option}
+            {options[i]}
           </button>
         ))}
       </div>

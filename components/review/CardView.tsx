@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import type { Card } from '@/lib/course/types'
+import { seededShuffle } from '@/lib/progress/scheduler'
 
 export function CardView({ card, onAnswer }: { card: Card; onAnswer: (correct: boolean) => void }) {
   const [revealed, setRevealed] = useState(false)
   const [picked, setPicked] = useState<number | null>(null)
   const [done, setDone] = useState(false)
+  const options = card.kind === 'choice' ? card.options : undefined
 
   function answer(correct: boolean) {
     if (done) return
@@ -16,13 +18,14 @@ export function CardView({ card, onAnswer }: { card: Card; onAnswer: (correct: b
 
   return (
     <div className="recall-card" data-done={done}>
-      <p className="m-0 font-serif text-base">{card.prompt}</p>
+      <p className="m-0 font-serif text-base whitespace-pre-wrap">{card.prompt}</p>
 
-      {card.kind === 'choice' && card.options ? (
+      {options ? (
         <div className="mt-3 flex flex-col gap-2">
-          {card.options.map((option, i) => (
+          {/* порядок перемешан по id карточки; верный ответ сверяется по исходному индексу */}
+          {seededShuffle(options.map((_, i) => i), card.id).map((i) => (
             <button
-              key={option}
+              key={options[i]}
               type="button"
               className="option-btn"
               disabled={done}
@@ -33,7 +36,7 @@ export function CardView({ card, onAnswer }: { card: Card; onAnswer: (correct: b
                 answer(i === card.correct)
               }}
             >
-              {option}
+              {options[i]}
             </button>
           ))}
           {done && <p className="m-0 text-sm text-ink-soft">{card.answer}</p>}
