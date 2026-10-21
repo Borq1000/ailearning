@@ -69,6 +69,19 @@ describe('VectorTask without WebGL', () => {
       answer: '2 по X (вправо), 1 по Y (вверх), 3 по Z (к тебе).',
     })
   })
+
+  it('names vector card direction by the sign of each coordinate', async () => {
+    render(<VectorTask id="vt6" target={[1, -1, 0]} start={[0, 0, 0]} />)
+    await screen.findByText(/3D-сцена недоступна/)
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Проверить' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
+    expect(useProgress.getState().customCards['vector-task:vt6']).toMatchObject({
+      kind: 'flip',
+      prompt: 'Куда указывает вектор v = [1, -1, 0]? Назови сдвиг по каждой оси.',
+      answer: '1 по X (вправо), −1 по Y (вниз), 0 по Z.',
+    })
+  })
 })
 
 describe('DotProduct3D without WebGL', () => {

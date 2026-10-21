@@ -10,7 +10,17 @@ import { Stage } from '@/components/viz/stage/Stage'
 import { StageFallbackNote } from '@/components/viz/stage/StageFallbackNote'
 import { VectorInputs } from './VectorInputs'
 
-const AXIS_HINT = ['по X (вправо)', 'по Y (вверх)', 'по Z (к тебе)']
+const AXIS_NAMES = ['X', 'Y', 'Z']
+const POSITIVE_HINTS = ['вправо', 'вверх', 'к тебе']
+const NEGATIVE_HINTS = ['влево', 'вниз', 'от тебя']
+
+/** Генерирует описание направления для координаты. */
+function getAxisHint(value: number, axisIndex: number): string {
+  const axisName = AXIS_NAMES[axisIndex]
+  if (value === 0) return `по ${axisName}`
+  const hint = value > 0 ? POSITIVE_HINTS[axisIndex] : NEGATIVE_HINTS[axisIndex]
+  return `по ${axisName} (${hint})`
+}
 
 export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; target: Vec; start?: Vec }) {
   const gate = useGate(id)
@@ -33,11 +43,14 @@ export function VectorTask({ id, target, start = [0, 0, 0] }: { id: string; targ
   }
 
   function revealAnswer() {
+    // Форматируем числа с типографическим минусом (−) вместо обычного (-)
+    const formatNumForCard = (x: number) => formatNum(x).replace('-', '−')
+    const answerParts = target.map((x, i) => `${formatNumForCard(x)} ${getAxisHint(x, i)}`)
     gate.reveal({
       id: `vector-task:${id}`,
       kind: 'flip',
       prompt: `Куда указывает вектор v = ${formatVec(target)}? Назови сдвиг по каждой оси.`,
-      answer: `${target.map((x, i) => `${formatNum(x)} ${AXIS_HINT[i]}`).join(', ')}.`,
+      answer: `${answerParts.join(', ')}.`,
     })
   }
 
